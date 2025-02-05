@@ -29,18 +29,11 @@
       margin-bottom: 20px;
     }
 
-    /* Slideshow and Notes Section */
-    .content {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-
+    /* Slideshow Styles */
     .slideshow {
-      width: 60%;
+      width: 80%;
       max-width: 600px;
+      margin: 0 auto;
       overflow: hidden;
     }
 
@@ -50,41 +43,23 @@
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     }
 
-    .notes {
-      width: 80%;
-      max-width: 300px;
-      text-align: left;
-      font-size: 1rem;
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    /* Download Links */
+    .download-links {
+      margin: 20px 0;
     }
 
-    .notes h2 {
-      font-size: 1.5rem;
-      color: #d6336c;
-      margin-bottom: 10px;
-    }
-
-    .notes p {
-      margin-bottom: 10px;
-    }
-
-    /* Download Button */
-    .download {
-      margin-top: 10px;
+    .download-links a {
       display: inline-block;
+      margin: 5px;
       padding: 10px 15px;
       background-color: #d6336c;
-      color: #fff;
+      color: white;
       text-decoration: none;
       border-radius: 5px;
-      font-size: 0.9rem;
     }
 
-    .download:hover {
-      background-color: #b52a57;
+    .download-links a:hover {
+      background-color: #c82333;
     }
 
     /* Background Music */
@@ -98,22 +73,29 @@
     <h1>Happy 10th Wedding Anniversary!</h1>
     <p>Celebrating 10 years of love and togetherness ❤️</p>
     
-    <!-- Slideshow and Notes Section -->
-    <div class="content">
-      <!-- Slideshow Section -->
-      <div class="slideshow">
-        <img id="slide" src="images/image0.jpeg" alt="Wedding Anniversary">
-        <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Image</a>
-      </div>
-
-      <!-- Notes Section -->
-      <div class="notes">
-        <h2>Special Notes</h2>
-        <p>💍 10 years of love, laughter, and memories.</p>
-        <p>🌹 Thank you for being my partner in this beautiful journey.</p>
-        <p>🎉 Here's to many more years of happiness together!</p>
-      </div>
+    <!-- Slideshow Section -->
+    <div class="slideshow">
+      <img id="slide" src="images/image1.jpg" alt="Wedding Anniversary">
     </div>
+    
+    <!-- Download Links -->
+    <div class="download-links">
+      <a href="images/image0.jpeg" download>Download Image 0</a>
+      <a href="images/image1.jpeg" download>Download Image 1</a>
+      <a href="images/image2.jpeg" download>Download Image 2</a>
+      <a href="images/image3.jpeg" download>Download Image 3</a>
+      <a href="images/image4.jpeg" download>Download Image 4</a>
+      <a href="images/image5.jpeg" download>Download Image 5</a>
+      <a href="images/image6.jpeg" download>Download Image 6</a>
+      <a href="images/image7.jpeg" download>Download Image 7</a>
+      <a href="images/image8.jpeg" download>Download Image 8</a>
+      <a href="images/image9.jpeg" download>Download Image 9</a>
+      <a href="images/image10.jpeg" download>Download Image 10</a>
+      <a href="images/image11.jpeg" download>Download Image 11</a>
+      <a href="images/image12.jpeg" download>Download Image 12</a>
+    </div>
+
+    <p>Note: Click on the links above to download the images.</p>
 
     <!-- Background Music -->
     <audio autoplay loop>
@@ -143,13 +125,11 @@
     // Slideshow variables
     let currentImageIndex = 0;
     const slideElement = document.getElementById("slide");
-    const downloadLink = document.getElementById("download-link");
 
     // Function to change the image
     function changeImage() {
       currentImageIndex = (currentImageIndex + 1) % images.length;
       slideElement.src = images[currentImageIndex];
-      downloadLink.href = images[currentImageIndex]; // Update download link
     }
 
     // Change the image every 3 seconds
