@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10th Wedding Anniversary</title>
+  <style>
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #f5d4d4, #ffffff);
+      text-align: center;
+      color: #333;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #d6336c;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+
+    /* Slideshow and Notes Section */
+    .content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .slideshow {
+      width: 60%;
+      max-width: 600px;
+      overflow: hidden;
+    }
+
+    .slideshow img {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .notes {
+      width: 30%;
+      max-width: 300px;
+      text-align: left;
+      font-size: 1rem;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .notes h2 {
+      font-size: 1.5rem;
+      color: #d6336c;
+      margin-bottom: 10px;
+    }
+
+    .notes p {
+      margin-bottom: 10px;
+    }
+
+    /* Download Button */
+    .download {
+      margin-top: 10px;
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: #d6336c;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .download:hover {
+      background-color: #b52a57;
+    }
+
+    /* Background Music */
+    audio {
+      display: none; /* Hide audio controls */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Happy 10th Wedding Anniversary!</h1>
+    <p>Celebrating 10 years of love and togetherness ❤️</p>
+    
+    <!-- Slideshow and Notes Section -->
+    <div class="content">
+      <!-- Slideshow Section -->
+      <div class="slideshow">
+        <img id="slide" src="images/image0.jpeg" alt="Wedding Anniversary">
+        <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Image</a>
+      </div>
+
+      <!-- Notes Section -->
+      <div class="notes">
+        <h2>Special Notes</h2>
+        <p>💍 10 years of love, laughter, and memories.</p>
+        <p>🌹 Thank you for being my partner in this beautiful journey.</p>
+        <p>🎉 Here's to many more years of happiness together!</p>
+      </div>
+    </div>
+
+    <!-- Background Music -->
+    <audio autoplay loop>
+      <source src="audio/capable-god.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+
+  <script>
+    // Array of image paths
+    const images = [
+      "images/image0.jpeg",
+      "images/image1.jpeg",
+      "images/image2.jpeg",
+      "images/image3.jpeg",
+      "images/image4.jpeg",
+      "images/image5.jpeg",
+      "images/image6.jpeg",
+      "images/image7.jpeg",
+      "images/image8.jpeg",
+      "images/image9.jpeg",
+      "images/image10.jpeg",
+      "images/image11.jpeg",
+      "images/image12.jpeg"
+    ];
+
+    // Slideshow variables
+    let currentImageIndex = 0;
+    const slideElement = document.getElementById("slide");
+    const downloadLink = document.getElementById("download-link");
+
+    // Function to change the image
+    function changeImage() {
+      currentImageIndex = (currentImageIndex + 1) % images.length;
+      slideElement.src = images[currentImageIndex];
+      downloadLink.href = images[currentImageIndex]; // Update download link
+    }
+
+    // Change the image every 3 seconds
+    setInterval(changeImage, 3000);
+  </script>
+</body>
+</html>
