@@ -84,6 +84,22 @@
     audio {
       display: none; /* Hide audio controls */
     }
+
+    /* Start Button */
+    .start-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #d6336c;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .start-button:hover {
+      background-color: #b52a57;
+    }
   </style>
 </head>
 <body>
@@ -105,9 +121,12 @@
       <p>🎉 Here's to many more years of happiness together!</p>
     </div>
 
+    <!-- Start Button -->
+    <button class="start-button" id="start-button">Start Celebration</button>
+
     <!-- Background Music -->
     <audio id="background-music" loop>
-      <source src="a.mp3">
+      <source src="a.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
@@ -152,6 +171,7 @@
     // Text-to-Speech for Notes
     const noteText = document.getElementById("note-text").innerText;
     const backgroundMusic = document.getElementById("background-music");
+    const startButton = document.getElementById("start-button");
 
     function speakNotes() {
       const speech = new SpeechSynthesisUtterance(noteText);
@@ -168,8 +188,10 @@
       window.speechSynthesis.speak(speech);
     }
 
-    // Start TTS on page load
-    window.onload = speakNotes;
+    // Start TTS and music on button click
+    startButton.addEventListener("click", () => {
+      speakNotes();
+    });
   </script>
 </body>
 </html>
