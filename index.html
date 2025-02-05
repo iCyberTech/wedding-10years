@@ -29,18 +29,11 @@
       margin-bottom: 20px;
     }
 
-    /* Slideshow and Notes Section */
-    .content {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-
+    /* Slideshow Section */
     .slideshow {
-      width: 60%;
+      width: 80%;
       max-width: 600px;
+      margin: 0 auto;
       overflow: hidden;
     }
 
@@ -48,27 +41,6 @@
       width: 100%;
       border-radius: 10px;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .notes {
-      width: 30%;
-      max-width: 300px;
-      text-align: left;
-      font-size: 1rem;
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .notes h2 {
-      font-size: 1.5rem;
-      color: #d6336c;
-      margin-bottom: 10px;
-    }
-
-    .notes p {
-      margin-bottom: 10px;
     }
 
     /* Download Button */
@@ -87,6 +59,30 @@
       background-color: #b52a57;
     }
 
+    /* Notes Section */
+    .notes {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 1rem;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      width: 80%;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    .notes h2 {
+      font-size: 1.5rem;
+      color: #d6336c;
+      margin-bottom: 10px;
+    }
+
+    .notes p {
+      margin-bottom: 10px;
+    }
+
     /* Background Music */
     audio {
       display: none; /* Hide audio controls */
@@ -98,21 +94,18 @@
     <h1>Happy 10th Wedding Anniversary!</h1>
     <p>Celebrating 10 years of love and togetherness ❤️</p>
     
-    <!-- Slideshow and Notes Section -->
-    <div class="content">
-      <!-- Slideshow Section -->
-      <div class="slideshow">
-        <img id="slide" src="images/image0.jpeg" alt="Wedding Anniversary">
-        <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Image</a>
-      </div>
+    <!-- Slideshow Section -->
+    <div class="slideshow">
+      <img id="slide" src="images/image0.jpeg" alt="Wedding Anniversary">
+      <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Image</a>
+    </div>
 
-      <!-- Notes Section -->
-      <div class="notes">
-        <h2>Special Notes</h2>
-        <p>💍 10 years of love, laughter, and memories.</p>
-        <p>🌹 Thank you for being my partner in this beautiful journey.</p>
-        <p>🎉 Here's to many more years of happiness together!</p>
-      </div>
+    <!-- Notes Section -->
+    <div class="notes">
+      <h2>Special Notes</h2>
+      <p>💍 10 years of love, laughter, and memories.</p>
+      <p>🌹 Thank you for being my partner in this beautiful journey.</p>
+      <p>🎉 Here's to many more years of happiness together!</p>
     </div>
 
     <!-- Background Music -->
