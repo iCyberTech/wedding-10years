@@ -43,6 +43,27 @@
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     }
 
+    /* Notes Section */
+    .notes {
+      margin-top: 20px;
+      font-size: 1rem;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      display: inline-block;
+    }
+
+    .notes h2 {
+      font-size: 1.5rem;
+      color: #d6336c;
+      margin-bottom: 10px;
+    }
+
+    .notes p {
+      margin-bottom: 10px;
+    }
+
     /* Download Button */
     .download {
       margin-top: 10px;
@@ -57,30 +78,6 @@
 
     .download:hover {
       background-color: #b52a57;
-    }
-
-    /* Notes Section */
-    .notes {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 1rem;
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-      width: 80%;
-      max-width: 600px;
-      margin: 20px auto;
-    }
-
-    .notes h2 {
-      font-size: 1.5rem;
-      color: #d6336c;
-      margin-bottom: 10px;
-    }
-
-    .notes p {
-      margin-bottom: 10px;
     }
 
     /* Background Music */
@@ -103,13 +100,13 @@
     <!-- Notes Section -->
     <div class="notes">
       <h2>Special Notes</h2>
-      <p>💍 10 years of love, laughter, and memories.</p>
+      <p id="note-text">💍 10 years of love, laughter, and memories.</p>
       <p>🌹 Thank you for being my partner in this beautiful journey.</p>
       <p>🎉 Here's to many more years of happiness together!</p>
     </div>
 
     <!-- Background Music -->
-    <audio autoplay loop>
+    <audio id="background-music" loop>
       <source src="audio/capable-god.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
@@ -147,6 +144,28 @@
 
     // Change the image every 3 seconds
     setInterval(changeImage, 3000);
+
+    // Text-to-Speech for Notes
+    const noteText = document.getElementById("note-text").innerText;
+    const backgroundMusic = document.getElementById("background-music");
+
+    function speakNotes() {
+      const speech = new SpeechSynthesisUtterance(noteText);
+      speech.lang = "en-US";
+      speech.rate = 1; // Adjust speed if needed
+      speech.pitch = 1;
+
+      // Play background music after TTS ends
+      speech.onend = () => {
+        backgroundMusic.play();
+      };
+
+      // Start TTS
+      window.speechSynthesis.speak(speech);
+    }
+
+    // Start TTS on page load
+    window.onload = speakNotes;
   </script>
 </body>
 </html>
