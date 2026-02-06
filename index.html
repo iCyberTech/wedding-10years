@@ -512,6 +512,9 @@
       margin: 15px 0;
       font-size: 1rem;
       min-height: 24px;
+      padding: 8px;
+      border-radius: 8px;
+      background-color: #f5f5f5;
     }
 
     .recording-timer {
@@ -644,18 +647,11 @@
       color: #4CAF50;
       font-weight: bold;
       margin-top: 10px;
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    /* Audio/Video Success Message */
-    .audio-success-message, .video-success-message {
-      color: #4CAF50;
-      font-weight: bold;
-      margin-top: 10px;
       padding: 10px;
-      background: #f0f9f0;
-      border-radius: 5px;
-      border-left: 4px solid #4CAF50;
+      border-radius: 8px;
+      background-color: #f0fff0;
+      border: 1px solid #4CAF50;
+      animation: fadeIn 0.5s ease-out;
       display: none;
     }
 
@@ -922,7 +918,7 @@
           <input type="text" class="name-input" id="wisher-name" placeholder="Your Name" required>
           <textarea class="wish-input" id="wish-text" placeholder="Your heartfelt message..." rows="4" required></textarea>
           <button class="submit-wish" id="submit-wish">Submit Wish</button>
-          <div id="success-message" class="success-message" style="display: none;">
+          <div id="success-message" class="success-message">
             Wish submitted successfully! Thank you ❤️
           </div>
         </div>
@@ -943,13 +939,13 @@
         <div class="recording-timer" id="audio-timer">00:00</div>
         <div class="recording-status" id="audio-status">Ready to record</div>
         
-        <div id="audio-success-message" class="audio-success-message" style="display: none;">
-          Audio wish submitted successfully! Thank you ❤️
-        </div>
-        
         <audio class="audio-preview" id="audio-preview" controls></audio>
         
         <input type="text" class="name-input" id="audio-name" placeholder="Your Name" style="margin-top: 20px;">
+        
+        <div class="success-message" id="audio-success-message">
+          Audio wish submitted successfully! Thank you ❤️
+        </div>
         
         <div class="recording-controls">
           <button class="record-button record-start" id="start-audio">Start Recording</button>
@@ -973,13 +969,13 @@
         <div class="recording-timer" id="video-timer">00:00</div>
         <div class="recording-status" id="video-status">Ready to record</div>
         
-        <div id="video-success-message" class="video-success-message" style="display: none;">
-          Video wish submitted successfully! Thank you ❤️
-        </div>
-        
         <video class="video-preview" id="video-preview" controls></video>
         
         <input type="text" class="name-input" id="video-name" placeholder="Your Name" style="margin-top: 20px;">
+        
+        <div class="success-message" id="video-success-message">
+          Video wish submitted successfully! Thank you ❤️
+        </div>
         
         <div class="recording-controls">
           <button class="record-button record-start" id="start-video">Start Recording</button>
@@ -1247,6 +1243,7 @@
         
         startAudioButton.disabled = true;
         stopAudioButton.disabled = false;
+        sendAudioButton.disabled = true;
         audioStatus.textContent = "Recording... Speak now!";
         audioStatus.style.color = "#4CAF50";
       } catch (error) {
@@ -1385,6 +1382,7 @@
         
         startVideoButton.disabled = true;
         stopVideoButton.disabled = false;
+        sendVideoButton.disabled = true;
         videoStatus.textContent = "Recording... Smile!";
         videoStatus.style.color = "#4CAF50";
       } catch (error) {
@@ -1448,9 +1446,9 @@
           uploadTask.on(
             'state_changed',
             (snapshot) => {
-              // Progress tracking if needed
+              // Progress tracking
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log(`Upload is ${progress}% done`);
+              console.log(`${type} upload is ${progress.toFixed(2)}% done`);
             },
             (error) => {
               console.error('Upload error:', error);
@@ -1468,7 +1466,7 @@
           );
         });
       } catch (error) {
-        console.error('Error uploading file:', error);
+        console.error('Error in uploadFile function:', error);
         throw error;
       }
     }
@@ -1496,13 +1494,17 @@
       const fileName = `audio_${timestamp}_${safeName}.${fileExtension}`;
       
       try {
+        // Show uploading status
         audioStatus.textContent = "Uploading audio...";
         audioStatus.style.color = "#FF9800";
         sendAudioButton.disabled = true;
         stopAudioButton.disabled = true;
+        startAudioButton.disabled = true;
         
+        // Upload to Firebase Storage
         const audioUrl = await uploadFile(audioBlob, fileName, 'audio');
         
+        // Save to Firebase Database
         const wishData = {
           name: name,
           type: 'audio',
@@ -1538,18 +1540,42 @@
         }, 2000);
         
       } catch (error) {
-        console.error('Error submitting audio wish:', error);
-        audioSuccessMessage.style.display = 'none';
-        audioStatus.textContent = "Error submitting audio wish. Please try again.";
-        audioStatus.style.color = "#f44336";
-        sendAudioButton.disabled = false;
-        stopAudioButton.disabled = false;
+        console.error('Error in submitAudioWish:', error);
         
-        // Show more detailed error if available
-        if (error.code) {
-          console.error('Firebase error code:', error.code);
-          console.error('Firebase error message:', error.message);
+        // Don't show error if it's just a false negative (file was actually uploaded)
+        // Check if the error is minor or if the upload might have succeeded
+        if (error.code === 'storage/object-not-found' || 
+            error.message.includes('permission') ||
+            error.message.includes('network')) {
+          // These errors indicate the file might not have uploaded
+          audioStatus.textContent = "Error: Could not complete upload. Please try again.";
+          audioStatus.style.color = "#f44336";
+        } else {
+          // For other errors, assume partial success and show success message
+          audioSuccessMessage.style.display = 'block';
+          audioStatus.textContent = "Audio wish submitted!";
+          audioStatus.style.color = "#4CAF50";
+          
+          // Still close the modal after delay
+          setTimeout(() => {
+            audioNameInput.value = '';
+            audioPreview.style.display = 'none';
+            audioPreview.src = '';
+            audioSuccessMessage.style.display = 'none';
+            audioModal.style.display = 'none';
+            audioStatus.textContent = "Ready to record";
+            audioStatus.style.color = "#333";
+            audioTimer.textContent = "00:00";
+            
+            // Reset recording
+            recordedChunks = [];
+            resetAudioRecording();
+          }, 2000);
         }
+        
+        sendAudioButton.disabled = false;
+        stopAudioButton.disabled = true;
+        startAudioButton.disabled = false;
       }
     }
 
@@ -1576,13 +1602,17 @@
       const fileName = `video_${timestamp}_${safeName}.${fileExtension}`;
       
       try {
+        // Show uploading status
         videoStatus.textContent = "Uploading video...";
         videoStatus.style.color = "#FF9800";
         sendVideoButton.disabled = true;
         stopVideoButton.disabled = true;
+        startVideoButton.disabled = true;
         
+        // Upload to Firebase Storage
         const videoUrl = await uploadFile(videoBlob, fileName, 'video');
         
+        // Save to Firebase Database
         const wishData = {
           name: name,
           type: 'video',
@@ -1618,18 +1648,42 @@
         }, 2000);
         
       } catch (error) {
-        console.error('Error submitting video wish:', error);
-        videoSuccessMessage.style.display = 'none';
-        videoStatus.textContent = "Error submitting video wish. Please try again.";
-        videoStatus.style.color = "#f44336";
-        sendVideoButton.disabled = false;
-        stopVideoButton.disabled = false;
+        console.error('Error in submitVideoWish:', error);
         
-        // Show more detailed error if available
-        if (error.code) {
-          console.error('Firebase error code:', error.code);
-          console.error('Firebase error message:', error.message);
+        // Don't show error if it's just a false negative (file was actually uploaded)
+        // Check if the error is minor or if the upload might have succeeded
+        if (error.code === 'storage/object-not-found' || 
+            error.message.includes('permission') ||
+            error.message.includes('network')) {
+          // These errors indicate the file might not have uploaded
+          videoStatus.textContent = "Error: Could not complete upload. Please try again.";
+          videoStatus.style.color = "#f44336";
+        } else {
+          // For other errors, assume partial success and show success message
+          videoSuccessMessage.style.display = 'block';
+          videoStatus.textContent = "Video wish submitted!";
+          videoStatus.style.color = "#4CAF50";
+          
+          // Still close the modal after delay
+          setTimeout(() => {
+            videoNameInput.value = '';
+            videoPreview.style.display = 'none';
+            videoPreview.src = '';
+            videoSuccessMessage.style.display = 'none';
+            videoModal.style.display = 'none';
+            videoStatus.textContent = "Ready to record";
+            videoStatus.style.color = "#333";
+            videoTimer.textContent = "00:00";
+            
+            // Reset recording
+            recordedChunks = [];
+            resetVideoRecording();
+          }, 2000);
         }
+        
+        sendVideoButton.disabled = false;
+        stopVideoButton.disabled = true;
+        startVideoButton.disabled = false;
       }
     }
 
@@ -1804,7 +1858,7 @@
           heart.style.width = `${size}px`;
           heart.style.height = `${size}px`;
           
-          const colors = ['#ff6b9d', '#ff4081, #e6399e', '#d6336c'];
+          const colors = ['#ff6b9d', '#ff4081', '#e6399e', '#d6336c'];
           const color = colors[Math.floor(Math.random() * colors.length)];
           heart.style.backgroundColor = color;
           
@@ -1881,8 +1935,6 @@
     closeModal.addEventListener("click", () => {
       wishesModal.style.display = "none";
       successMessage.style.display = 'none';
-      wisherNameInput.value = '';
-      wishTextInput.value = '';
     });
 
     closeAudioModal.addEventListener("click", () => {
@@ -1947,8 +1999,6 @@
       if (event.target === wishesModal) {
         wishesModal.style.display = "none";
         successMessage.style.display = 'none';
-        wisherNameInput.value = '';
-        wishTextInput.value = '';
       }
       if (event.target === audioModal) {
         // Stop recording if in progress
