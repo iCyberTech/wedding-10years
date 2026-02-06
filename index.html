@@ -7,21 +7,53 @@
   <style>
     /* General Styles */
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 0;
       background: linear-gradient(to bottom, #f5d4d4, #ffffff);
       text-align: center;
       color: #333;
+      overflow-x: hidden;
     }
 
     .container {
       padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    h1 {
-      font-size: 2.5rem;
+    /* Animated Title */
+    .animated-title {
+      font-size: 2.8rem;
       color: #d6336c;
+      margin-bottom: 10px;
+      overflow: hidden;
+      white-space: nowrap;
+      animation: 
+        typing 3.5s steps(30, end),
+        blink-caret 0.75s step-end infinite,
+        color-change 5s infinite alternate;
+      border-right: 3px solid #d6336c;
+      display: inline-block;
+      letter-spacing: 2px;
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+
+    @keyframes blink-caret {
+      from, to { border-color: transparent }
+      50% { border-color: #d6336c; }
+    }
+
+    @keyframes color-change {
+      0% { color: #d6336c; }
+      25% { color: #e6399e; }
+      50% { color: #ff4081; }
+      75% { color: #ff6b9d; }
+      100% { color: #d6336c; }
     }
 
     p {
@@ -30,53 +62,180 @@
     }
 
     /* Slideshow Section */
-    .slideshow {
+    .slideshow-container {
       width: 80%;
       max-width: 600px;
-      margin: 0 auto;
+      margin: 30px auto;
+      position: relative;
       overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+      height: 400px;
     }
 
-    .slideshow img {
+    .slide {
       width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+      object-fit: cover;
       border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     }
 
-    /* Notes Section */
-    .notes {
-      margin-top: 20px;
-      font-size: 1rem;
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-      display: inline-block;
-    }
-
-    .notes h2 {
-      font-size: 1.5rem;
-      color: #d6336c;
-      margin-bottom: 10px;
-    }
-
-    .notes p {
-      margin-bottom: 10px;
+    .slide.active {
+      opacity: 1;
     }
 
     /* Download Button */
     .download {
-      margin-top: 10px;
+      margin-top: 15px;
       display: inline-block;
-      padding: 10px 15px;
+      padding: 12px 20px;
       background-color: #d6336c;
       color: #fff;
       text-decoration: none;
       border-radius: 5px;
-      font-size: 0.9rem;
+      font-size: 1rem;
+      transition: all 0.3s ease;
     }
 
     .download:hover {
+      background-color: #b52a57;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Notes Section */
+    .notes {
+      margin-top: 30px;
+      font-size: 1rem;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+      display: inline-block;
+      max-width: 800px;
+      width: 90%;
+    }
+
+    .notes h2 {
+      font-size: 1.8rem;
+      color: #d6336c;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .notes p {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    /* Buttons Container */
+    .buttons-container {
+      margin: 30px 0;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .action-button {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      letter-spacing: 1px;
+      min-width: 200px;
+    }
+
+    .start-button {
+      background: linear-gradient(to right, #d6336c, #e6399e);
+      color: white;
+      box-shadow: 0 4px 15px rgba(214, 51, 108, 0.4);
+    }
+
+    .start-button:hover {
+      background: linear-gradient(to right, #b52a57, #d6336c);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(214, 51, 108, 0.6);
+    }
+
+    .wishes-button {
+      background: linear-gradient(to right, #36a1d6, #6bc5ff);
+      color: white;
+      box-shadow: 0 4px 15px rgba(54, 161, 214, 0.4);
+    }
+
+    .wishes-button:hover {
+      background: linear-gradient(to right, #2a8ab5, #36a1d6);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(54, 161, 214, 0.6);
+    }
+
+    /* Wishes Modal */
+    .wishes-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .wishes-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: modal-appear 0.5s ease-out;
+    }
+
+    @keyframes modal-appear {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .wishes-content h2 {
+      color: #d6336c;
+      margin-bottom: 20px;
+    }
+
+    .wishes-content p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .close-modal {
+      padding: 10px 25px;
+      background-color: #d6336c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .close-modal:hover {
       background-color: #b52a57;
     }
 
@@ -85,33 +244,71 @@
       display: none; /* Hide audio controls */
     }
 
-    /* Start Button */
-    .start-button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #d6336c;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
+    /* Heart Animation */
+    .heart {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: #ff6b9d;
+      transform: rotate(45deg);
+      opacity: 0;
+      pointer-events: none;
     }
 
-    .start-button:hover {
-      background-color: #b52a57;
+    .heart:before, .heart:after {
+      content: '';
+      width: 20px;
+      height: 20px;
+      background-color: #ff6b9d;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    .heart:before {
+      top: -10px;
+      left: 0;
+    }
+
+    .heart:after {
+      top: 0;
+      left: -10px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .animated-title {
+        font-size: 2rem;
+      }
+      
+      .slideshow-container {
+        width: 95%;
+        height: 300px;
+      }
+      
+      .buttons-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .action-button {
+        width: 90%;
+        max-width: 300px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Happy 10th Wedding Anniversary!</h1>
+    <!-- Animated Title -->
+    <h1 class="animated-title">Happy 10th Wedding Anniversary!</h1>
     <p>Celebrating 10 years of love and togetherness ❤️</p>
     
     <!-- Slideshow Section -->
-    <div class="slideshow">
-      <img id="slide" src="images/image0.jpeg" alt="Wedding Anniversary">
-      <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Image</a>
+    <div class="slideshow-container" id="slideshow-container">
+      <!-- Images will be inserted here by JavaScript -->
     </div>
+    
+    <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Current Image</a>
 
     <!-- Notes Section -->
     <div class="notes">
@@ -121,8 +318,23 @@
       <p>🎉 Here's to many more years of happiness together!</p>
     </div>
 
-    <!-- Start Button -->
-    <button class="start-button" id="start-button">Start Celebration</button>
+    <!-- Buttons Container -->
+    <div class="buttons-container">
+      <button class="action-button start-button" id="start-button">Start Celebration</button>
+      <button class="action-button wishes-button" id="wishes-button">Send Wishes</button>
+    </div>
+
+    <!-- Wishes Modal -->
+    <div class="wishes-modal" id="wishes-modal">
+      <div class="wishes-content">
+        <h2>Warmest Wishes!</h2>
+        <p>To the most wonderful couple,</p>
+        <p>May your 10th wedding anniversary be filled with joy, laughter, and cherished memories. Here's to a decade of beautiful moments and to many more years of love and happiness together!</p>
+        <p>With all our love,</p>
+        <p>Family & Friends ❤️</p>
+        <button class="close-modal" id="close-modal">Close</button>
+      </div>
+    </div>
 
     <!-- Background Music -->
     <audio id="background-music" loop>
@@ -155,42 +367,224 @@
 
     // Slideshow variables
     let currentImageIndex = 0;
-    const slideElement = document.getElementById("slide");
+    let slideshowInterval;
+    const slideshowContainer = document.getElementById("slideshow-container");
     const downloadLink = document.getElementById("download-link");
 
-    // Function to change the image
-    function changeImage() {
-      currentImageIndex = (currentImageIndex + 1) % images.length;
-      slideElement.src = images[currentImageIndex];
-      downloadLink.href = images[currentImageIndex]; // Update download link
+    // Initialize slideshow with all images
+    function initializeSlideshow() {
+      slideshowContainer.innerHTML = '';
+      
+      images.forEach((src, index) => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = `Anniversary Memory ${index + 1}`;
+        img.className = 'slide';
+        if (index === 0) {
+          img.classList.add('active');
+        }
+        slideshowContainer.appendChild(img);
+      });
     }
 
-    // Change the image every 3 seconds
-    setInterval(changeImage, 3000);
+    // Array of different transition classes
+    const transitions = [
+      'fade',
+      'slide-left',
+      'slide-right',
+      'zoom-in',
+      'zoom-out',
+      'rotate'
+    ];
+
+    // Function to change the image with random transitions
+    function changeImage() {
+      // Remove active class from current image
+      const currentSlide = document.querySelector('.slide.active');
+      currentSlide.classList.remove('active');
+      
+      // Select random next image (different from current)
+      let nextIndex;
+      do {
+        nextIndex = Math.floor(Math.random() * images.length);
+      } while (nextIndex === currentImageIndex && images.length > 1);
+      
+      currentImageIndex = nextIndex;
+      
+      // Apply random transition
+      const nextSlide = document.querySelectorAll('.slide')[currentImageIndex];
+      const randomTransition = transitions[Math.floor(Math.random() * transitions.length)];
+      
+      // Apply transition class
+      nextSlide.style.transition = 'all 1.5s ease-in-out';
+      
+      // Apply different transitions based on random selection
+      switch(randomTransition) {
+        case 'slide-left':
+          nextSlide.style.transform = 'translateX(100%)';
+          nextSlide.classList.add('active');
+          setTimeout(() => {
+            nextSlide.style.transform = 'translateX(0)';
+          }, 10);
+          break;
+        case 'slide-right':
+          nextSlide.style.transform = 'translateX(-100%)';
+          nextSlide.classList.add('active');
+          setTimeout(() => {
+            nextSlide.style.transform = 'translateX(0)';
+          }, 10);
+          break;
+        case 'zoom-in':
+          nextSlide.style.transform = 'scale(0.5)';
+          nextSlide.classList.add('active');
+          setTimeout(() => {
+            nextSlide.style.transform = 'scale(1)';
+          }, 10);
+          break;
+        case 'zoom-out':
+          nextSlide.style.transform = 'scale(1.5)';
+          nextSlide.classList.add('active');
+          setTimeout(() => {
+            nextSlide.style.transform = 'scale(1)';
+          }, 10);
+          break;
+        case 'rotate':
+          nextSlide.style.transform = 'rotate(180deg)';
+          nextSlide.classList.add('active');
+          setTimeout(() => {
+            nextSlide.style.transform = 'rotate(0)';
+          }, 10);
+          break;
+        default: // fade
+          nextSlide.classList.add('active');
+          break;
+      }
+      
+      // Update download link
+      downloadLink.href = images[currentImageIndex];
+      downloadLink.download = `AnniversaryImage${currentImageIndex}.jpeg`;
+      
+      // Reset transform after animation
+      setTimeout(() => {
+        nextSlide.style.transform = '';
+      }, 1500);
+    }
+
+    // Start slideshow
+    function startSlideshow() {
+      if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+      }
+      slideshowInterval = setInterval(changeImage, 3000);
+    }
 
     // Text-to-Speech for Notes
     const noteText = document.getElementById("note-text").innerText;
     const backgroundMusic = document.getElementById("background-music");
     const startButton = document.getElementById("start-button");
+    const wishesButton = document.getElementById("wishes-button");
+    const wishesModal = document.getElementById("wishes-modal");
+    const closeModal = document.getElementById("close-modal");
 
     function speakNotes() {
       const speech = new SpeechSynthesisUtterance(noteText);
       speech.lang = "en-US";
-      speech.rate = 1; // Adjust speed if needed
+      speech.rate = 1;
       speech.pitch = 1;
 
       // Play background music after TTS ends
       speech.onend = () => {
         backgroundMusic.play();
+        startSlideshow();
+        createHearts();
       };
 
       // Start TTS
       window.speechSynthesis.speak(speech);
     }
 
-    // Start TTS and music on button click
+    // Create floating hearts animation
+    function createHearts() {
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+          const heart = document.createElement('div');
+          heart.className = 'heart';
+          
+          // Random position
+          const startX = Math.random() * window.innerWidth;
+          heart.style.left = `${startX}px`;
+          heart.style.top = `${window.innerHeight}px`;
+          
+          // Random size
+          const size = Math.random() * 20 + 10;
+          heart.style.width = `${size}px`;
+          heart.style.height = `${size}px`;
+          
+          // Random color
+          const colors = ['#ff6b9d', '#ff4081', '#e6399e', '#d6336c'];
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          heart.style.backgroundColor = color;
+          heart.style.before = heart.style.after = color;
+          
+          document.body.appendChild(heart);
+          
+          // Animate heart
+          const animation = heart.animate([
+            { 
+              top: `${window.innerHeight}px`,
+              opacity: 0,
+              transform: 'rotate(45deg) scale(0)'
+            },
+            { 
+              top: `${Math.random() * window.innerHeight}px`,
+              opacity: 0.8,
+              transform: 'rotate(45deg) scale(1)'
+            },
+            { 
+              top: `-50px`,
+              opacity: 0,
+              transform: 'rotate(45deg) scale(0)'
+            }
+          ], {
+            duration: Math.random() * 3000 + 2000,
+            easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)'
+          });
+          
+          // Remove heart after animation
+          animation.onfinish = () => {
+            heart.remove();
+          };
+        }, i * 200);
+      }
+    }
+
+    // Event Listeners
     startButton.addEventListener("click", () => {
       speakNotes();
+      startButton.textContent = "Celebration Started!";
+      startButton.disabled = true;
+      startButton.style.opacity = "0.7";
+    });
+
+    wishesButton.addEventListener("click", () => {
+      wishesModal.style.display = "flex";
+    });
+
+    closeModal.addEventListener("click", () => {
+      wishesModal.style.display = "none";
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener("click", (event) => {
+      if (event.target === wishesModal) {
+        wishesModal.style.display = "none";
+      }
+    });
+
+    // Initialize the page
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeSlideshow();
+      startSlideshow();
     });
   </script>
 </body>
