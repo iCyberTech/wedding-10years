@@ -157,6 +157,29 @@
       color: #d6336c;
       margin-bottom: 15px;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .close-notes {
+      background: #d6336c;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .close-notes:hover {
+      background: #b52a57;
+      transform: rotate(90deg);
     }
 
     .notes p {
@@ -475,12 +498,14 @@
       margin: 20px auto;
       display: none;
       max-width: 100%;
+      border-radius: 10px;
+      background: #f5f5f5;
+      padding: 10px;
     }
 
     .video-preview {
       width: 100%;
       max-height: 300px;
-      border-radius: 10px;
       background: #000;
     }
 
@@ -815,7 +840,11 @@
 
     <!-- Notes Section - Initially Hidden at Bottom -->
     <div class="notes" id="notes-section">
-      <h2>Special Notes</h2>
+      <h2>Special Notes
+        <button class="close-notes" id="close-notes">
+          <i class="fas fa-times"></i>
+        </button>
+      </h2>
       <p id="note-text">💍 10 years of love, laughter, and memories.</p>
       <p>🌹 Thank you for being my partner in this beautiful journey.</p>
       <p>🎉 Here's to many more years of happiness together!</p>
@@ -971,6 +1000,7 @@
     // DOM Elements
     const startButton = document.getElementById("start-button");
     const notesSection = document.getElementById("notes-section");
+    const closeNotesButton = document.getElementById("close-notes");
     
     // Floating Icons
     const floatingWish = document.getElementById("floating-wish");
@@ -1154,26 +1184,50 @@
     // Start audio recording
     async function startAudioRecording() {
       try {
-        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(audioStream);
+        audioStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          }
+        });
+        
+        // Set MIME type based on browser support
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
+          ? 'audio/webm;codecs=opus' 
+          : MediaRecorder.isTypeSupported('audio/mp4') 
+            ? 'audio/mp4' 
+            : 'audio/webm';
+        
+        mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
         recordedChunks = [];
         
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
+          if (event.data && event.data.size > 0) {
             recordedChunks.push(event.data);
           }
         };
         
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+          const audioBlob = new Blob(recordedChunks, { type: mimeType });
           const audioUrl = URL.createObjectURL(audioBlob);
+          
           audioPreview.src = audioUrl;
           audioPreview.style.display = 'block';
           sendAudioButton.disabled = false;
           audioStatus.textContent = "Recording stopped. Preview available.";
+          audioStatus.style.color = "#4CAF50";
         };
         
-        mediaRecorder.start();
+        mediaRecorder.onerror = (event) => {
+          console.error('MediaRecorder error:', event.error);
+          audioStatus.textContent = "Recording error. Please try again.";
+          audioStatus.style.color = "#f44336";
+          resetAudioRecording();
+        };
+        
+        mediaRecorder.start(1000); // Collect data every 1 second
         isRecording = true;
         currentRecordingType = 'audio';
         startTimer();
@@ -1181,15 +1235,31 @@
         startAudioButton.disabled = true;
         stopAudioButton.disabled = false;
         audioStatus.textContent = "Recording... Speak now!";
+        audioStatus.style.color = "#4CAF50";
       } catch (error) {
         console.error('Error accessing microphone:', error);
         audioStatus.textContent = "Error accessing microphone. Please check permissions.";
+        audioStatus.style.color = "#f44336";
+        resetAudioRecording();
+      }
+    }
+
+    // Reset audio recording state
+    function resetAudioRecording() {
+      startAudioButton.disabled = false;
+      stopAudioButton.disabled = true;
+      sendAudioButton.disabled = true;
+      isRecording = false;
+      stopTimer();
+      
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
       }
     }
 
     // Stop audio recording
     function stopAudioRecording() {
-      if (mediaRecorder && isRecording) {
+      if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         isRecording = false;
         stopTimer();
@@ -1209,35 +1279,65 @@
       try {
         videoStream = await navigator.mediaDevices.getUserMedia({ 
           audio: true, 
-          video: { width: 640, height: 480 } 
+          video: { 
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: "user"
+          } 
         });
+        
+        // Set MIME type based on browser support
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
+          ? 'video/webm;codecs=vp9' 
+          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8') 
+            ? 'video/webm;codecs=vp8' 
+            : MediaRecorder.isTypeSupported('video/mp4') 
+              ? 'video/mp4' 
+              : 'video/webm';
         
         // Show camera preview
         videoPreview.srcObject = videoStream;
         videoPreview.style.display = 'block';
         videoPreview.muted = true;
-        videoPreview.play();
+        videoPreview.play().catch(e => console.log('Preview play error:', e));
         
-        mediaRecorder = new MediaRecorder(videoStream);
+        mediaRecorder = new MediaRecorder(videoStream, { mimeType: mimeType });
         recordedChunks = [];
         
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
+          if (event.data && event.data.size > 0) {
             recordedChunks.push(event.data);
           }
         };
         
         mediaRecorder.onstop = () => {
-          const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+          const mimeType = mediaRecorder.mimeType || 'video/webm';
+          const videoBlob = new Blob(recordedChunks, { type: mimeType });
           const videoUrl = URL.createObjectURL(videoBlob);
+          
+          // Stop preview stream
+          if (videoPreview.srcObject) {
+            videoPreview.srcObject.getTracks().forEach(track => track.stop());
+          }
+          
           videoPreview.srcObject = null;
           videoPreview.src = videoUrl;
           videoPreview.muted = false;
+          videoPreview.load(); // Reload with the new source
+          
           sendVideoButton.disabled = false;
           videoStatus.textContent = "Recording stopped. Preview available.";
+          videoStatus.style.color = "#4CAF50";
         };
         
-        mediaRecorder.start();
+        mediaRecorder.onerror = (event) => {
+          console.error('MediaRecorder error:', event.error);
+          videoStatus.textContent = "Recording error. Please try again.";
+          videoStatus.style.color = "#f44336";
+          resetVideoRecording();
+        };
+        
+        mediaRecorder.start(1000); // Collect data every 1 second
         isRecording = true;
         currentRecordingType = 'video';
         startTimer();
@@ -1245,15 +1345,31 @@
         startVideoButton.disabled = true;
         stopVideoButton.disabled = false;
         videoStatus.textContent = "Recording... Smile!";
+        videoStatus.style.color = "#4CAF50";
       } catch (error) {
         console.error('Error accessing camera:', error);
         videoStatus.textContent = "Error accessing camera. Please check permissions.";
+        videoStatus.style.color = "#f44336";
+        resetVideoRecording();
+      }
+    }
+
+    // Reset video recording state
+    function resetVideoRecording() {
+      startVideoButton.disabled = false;
+      stopVideoButton.disabled = true;
+      sendVideoButton.disabled = true;
+      isRecording = false;
+      stopTimer();
+      
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
       }
     }
 
     // Stop video recording
     function stopVideoRecording() {
-      if (mediaRecorder && isRecording) {
+      if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         isRecording = false;
         stopTimer();
@@ -1261,7 +1377,7 @@
         startVideoButton.disabled = false;
         stopVideoButton.disabled = true;
         
-        // Stop all video tracks
+        // Stop all video tracks (preview tracks are already stopped in onstop)
         if (videoStream) {
           videoStream.getTracks().forEach(track => track.stop());
         }
@@ -1295,11 +1411,14 @@
         return;
       }
       
-      const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
-      const fileName = `audio_${Date.now()}_${name}.webm`;
+      const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+      const audioBlob = new Blob(recordedChunks, { type: mimeType });
+      const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const fileName = `audio_${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExtension}`;
       
       try {
         audioStatus.textContent = "Uploading audio...";
+        audioStatus.style.color = "#FF9800";
         sendAudioButton.disabled = true;
         
         const audioUrl = await uploadFile(audioBlob, fileName, 'audio');
@@ -1316,19 +1435,26 @@
         await wishesRef.push(wishData);
         
         audioStatus.textContent = "Audio wish submitted successfully!";
+        audioStatus.style.color = "#4CAF50";
         audioNameInput.value = '';
         audioPreview.style.display = 'none';
+        audioPreview.src = '';
         sendAudioButton.disabled = true;
         stopAudioButton.disabled = true;
         startAudioButton.disabled = false;
         
+        // Clear recorded chunks
+        recordedChunks = [];
+        
         setTimeout(() => {
           audioModal.style.display = 'none';
           audioStatus.textContent = "Ready to record";
+          audioStatus.style.color = "#333";
         }, 2000);
       } catch (error) {
         console.error('Error submitting audio wish:', error);
         audioStatus.textContent = "Error submitting audio wish. Please try again.";
+        audioStatus.style.color = "#f44336";
         sendAudioButton.disabled = false;
       }
     }
@@ -1346,11 +1472,14 @@
         return;
       }
       
-      const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-      const fileName = `video_${Date.now()}_${name}.webm`;
+      const mimeType = mediaRecorder.mimeType || 'video/webm';
+      const videoBlob = new Blob(recordedChunks, { type: mimeType });
+      const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const fileName = `video_${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExtension}`;
       
       try {
         videoStatus.textContent = "Uploading video...";
+        videoStatus.style.color = "#FF9800";
         sendVideoButton.disabled = true;
         
         const videoUrl = await uploadFile(videoBlob, fileName, 'video');
@@ -1367,19 +1496,26 @@
         await wishesRef.push(wishData);
         
         videoStatus.textContent = "Video wish submitted successfully!";
+        videoStatus.style.color = "#4CAF50";
         videoNameInput.value = '';
         videoPreview.style.display = 'none';
+        videoPreview.src = '';
         sendVideoButton.disabled = true;
         stopVideoButton.disabled = true;
         startVideoButton.disabled = false;
         
+        // Clear recorded chunks
+        recordedChunks = [];
+        
         setTimeout(() => {
           videoModal.style.display = 'none';
           videoStatus.textContent = "Ready to record";
+          videoStatus.style.color = "#333";
         }, 2000);
       } catch (error) {
         console.error('Error submitting video wish:', error);
         videoStatus.textContent = "Error submitting video wish. Please try again.";
+        videoStatus.style.color = "#f44336";
         sendVideoButton.disabled = false;
       }
     }
@@ -1496,7 +1632,10 @@
     // Play audio function
     function playAudio(url) {
       const audio = new Audio(url);
-      audio.play();
+      audio.play().catch(e => {
+        console.error('Error playing audio:', e);
+        alert('Error playing audio. Please try downloading it instead.');
+      });
     }
 
     // Play video function
@@ -1525,6 +1664,11 @@
       // Update button text and disable it
       startButton.textContent = "Celebration Started!";
       startButton.disabled = true;
+    }
+
+    // Close notes function
+    function closeNotes() {
+      notesSection.classList.remove('show');
     }
 
     // Create floating hearts animation
@@ -1578,6 +1722,7 @@
 
     // Event Listeners
     startButton.addEventListener("click", startCelebration);
+    closeNotesButton.addEventListener("click", closeNotes);
 
     // Floating icons event listeners
     floatingWish.addEventListener("click", () => {
@@ -1588,11 +1733,25 @@
     floatingAudio.addEventListener("click", () => {
       audioModal.style.display = "flex";
       audioNameInput.focus();
+      // Reset recording state when opening modal
+      resetAudioRecording();
+      audioPreview.style.display = 'none';
+      audioPreview.src = '';
+      audioStatus.textContent = "Ready to record";
+      audioStatus.style.color = "#333";
+      recordedChunks = [];
     });
 
     floatingVideo.addEventListener("click", () => {
       videoModal.style.display = "flex";
       videoNameInput.focus();
+      // Reset recording state when opening modal
+      resetVideoRecording();
+      videoPreview.style.display = 'none';
+      videoPreview.src = '';
+      videoStatus.textContent = "Ready to record";
+      videoStatus.style.color = "#333";
+      recordedChunks = [];
     });
 
     // Close modal event listeners
@@ -1606,6 +1765,11 @@
       if (isRecording && currentRecordingType === 'audio') {
         stopAudioRecording();
       }
+      // Reset state
+      resetAudioRecording();
+      audioPreview.style.display = 'none';
+      audioPreview.src = '';
+      recordedChunks = [];
     });
 
     closeVideoModal.addEventListener("click", () => {
@@ -1614,6 +1778,11 @@
       if (isRecording && currentRecordingType === 'video') {
         stopVideoRecording();
       }
+      // Reset state
+      resetVideoRecording();
+      videoPreview.style.display = 'none';
+      videoPreview.src = '';
+      recordedChunks = [];
     });
 
     closeDisplayModal.addEventListener("click", () => {
@@ -1647,12 +1816,20 @@
         if (isRecording && currentRecordingType === 'audio') {
           stopAudioRecording();
         }
+        resetAudioRecording();
+        audioPreview.style.display = 'none';
+        audioPreview.src = '';
+        recordedChunks = [];
       }
       if (event.target === videoModal) {
         videoModal.style.display = "none";
         if (isRecording && currentRecordingType === 'video') {
           stopVideoRecording();
         }
+        resetVideoRecording();
+        videoPreview.style.display = 'none';
+        videoPreview.src = '';
+        recordedChunks = [];
       }
       if (event.target === wishesDisplayModal) {
         wishesDisplayModal.style.display = "none";
