@@ -328,12 +328,53 @@
     .wishes-content h2 {
       color: #d6336c;
       margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .wishes-content p {
       font-size: 1.1rem;
       line-height: 1.6;
       margin-bottom: 20px;
+    }
+
+    /* Recording Modal Header */
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 1.8rem;
+      color: #d6336c;
+      margin: 0;
+      text-align: center;
+      flex-grow: 1;
+      padding-right: 40px; /* Space for close button */
+    }
+
+    .modal-close-button {
+      background: #d6336c;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .modal-close-button:hover {
+      background: #b52a57;
+      transform: rotate(90deg);
     }
 
     /* Wishes Form */
@@ -391,23 +432,6 @@
       transform: translateY(-2px);
     }
 
-    .close-modal {
-      padding: 10px 25px;
-      background-color: #d6336c;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: 20px;
-      transition: all 0.3s ease;
-    }
-
-    .close-modal:hover {
-      background-color: #b52a57;
-      transform: translateY(-2px);
-    }
-
     /* Recording Modal */
     .recording-modal {
       display: none;
@@ -438,6 +462,9 @@
     .recording-title {
       color: #d6336c;
       margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .recording-controls {
@@ -872,7 +899,11 @@
     <!-- Text Wishes Modal -->
     <div class="wishes-modal" id="wishes-modal">
       <div class="wishes-content">
-        <h2>Send Your Wishes</h2>
+        <h2>Send Your Wishes
+          <button class="modal-close-button" id="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </h2>
         <p>Share your heartfelt wishes for the happy couple!</p>
         
         <div class="wish-form" id="wish-form">
@@ -883,15 +914,18 @@
             Wish submitted successfully! Thank you ❤️
           </div>
         </div>
-        
-        <button class="close-modal" id="close-modal">Close</button>
       </div>
     </div>
 
     <!-- Audio Recording Modal -->
     <div class="recording-modal" id="audio-modal">
       <div class="recording-content">
-        <h2 class="recording-title">Record Audio Wish</h2>
+        <div class="modal-header">
+          <h2 class="modal-title">Record Audio Wish</h2>
+          <button class="modal-close-button" id="close-audio-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
         <p>Record your voice message for the couple.</p>
         
         <div class="recording-timer" id="audio-timer">00:00</div>
@@ -899,22 +933,25 @@
         
         <audio class="audio-preview" id="audio-preview" controls></audio>
         
+        <input type="text" class="name-input" id="audio-name" placeholder="Your Name" style="margin-top: 20px;">
+        
         <div class="recording-controls">
           <button class="record-button record-start" id="start-audio">Start Recording</button>
           <button class="record-button record-stop" id="stop-audio" disabled>Stop Recording</button>
           <button class="record-button record-send" id="send-audio" disabled>Send Audio</button>
         </div>
-        
-        <input type="text" class="name-input" id="audio-name" placeholder="Your Name" style="margin-top: 20px;">
-        
-        <button class="close-modal" id="close-audio-modal">Close</button>
       </div>
     </div>
 
     <!-- Video Recording Modal -->
     <div class="recording-modal" id="video-modal">
       <div class="recording-content">
-        <h2 class="recording-title">Record Video Wish</h2>
+        <div class="modal-header">
+          <h2 class="modal-title">Record Video Wish</h2>
+          <button class="modal-close-button" id="close-video-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
         <p>Record a video message for the couple.</p>
         
         <div class="recording-timer" id="video-timer">00:00</div>
@@ -922,15 +959,13 @@
         
         <video class="video-preview" id="video-preview" controls></video>
         
+        <input type="text" class="name-input" id="video-name" placeholder="Your Name" style="margin-top: 20px;">
+        
         <div class="recording-controls">
           <button class="record-button record-start" id="start-video">Start Recording</button>
           <button class="record-button record-stop" id="stop-video" disabled>Stop Recording</button>
           <button class="record-button record-send" id="send-video" disabled>Send Video</button>
         </div>
-        
-        <input type="text" class="name-input" id="video-name" placeholder="Your Name" style="margin-top: 20px;">
-        
-        <button class="close-modal" id="close-video-modal">Close</button>
       </div>
     </div>
 
@@ -1073,17 +1108,7 @@
       });
     }
 
-    // Array of different transition classes
-    const transitions = [
-      'fade',
-      'slide-left',
-      'slide-right',
-      'zoom-in',
-      'zoom-out',
-      'rotate'
-    ];
-
-    // Function to change the image with random transitions
+    // Function to change the image
     function changeImage() {
       const currentSlide = document.querySelector('.slide.active');
       currentSlide.classList.remove('active');
@@ -1096,57 +1121,10 @@
       currentImageIndex = nextIndex;
       
       const nextSlide = document.querySelectorAll('.slide')[currentImageIndex];
-      const randomTransition = transitions[Math.floor(Math.random() * transitions.length)];
-      
-      nextSlide.style.transition = 'all 1.5s ease-in-out';
-      
-      switch(randomTransition) {
-        case 'slide-left':
-          nextSlide.style.transform = 'translateX(100%)';
-          nextSlide.classList.add('active');
-          setTimeout(() => {
-            nextSlide.style.transform = 'translateX(0)';
-          }, 10);
-          break;
-        case 'slide-right':
-          nextSlide.style.transform = 'translateX(-100%)';
-          nextSlide.classList.add('active');
-          setTimeout(() => {
-            nextSlide.style.transform = 'translateX(0)';
-          }, 10);
-          break;
-        case 'zoom-in':
-          nextSlide.style.transform = 'scale(0.5)';
-          nextSlide.classList.add('active');
-          setTimeout(() => {
-            nextSlide.style.transform = 'scale(1)';
-          }, 10);
-          break;
-        case 'zoom-out':
-          nextSlide.style.transform = 'scale(1.5)';
-          nextSlide.classList.add('active');
-          setTimeout(() => {
-            nextSlide.style.transform = 'scale(1)';
-          }, 10);
-          break;
-        case 'rotate':
-          nextSlide.style.transform = 'rotate(180deg)';
-          nextSlide.classList.add('active');
-          setTimeout(() => {
-            nextSlide.style.transform = 'rotate(0)';
-          }, 10);
-          break;
-        default:
-          nextSlide.classList.add('active');
-          break;
-      }
+      nextSlide.classList.add('active');
       
       downloadLink.href = images[currentImageIndex];
       downloadLink.download = `AnniversaryImage${currentImageIndex}.jpeg`;
-      
-      setTimeout(() => {
-        nextSlide.style.transform = '';
-      }, 1500);
     }
 
     // Start slideshow
@@ -1193,13 +1171,26 @@
         });
         
         // Set MIME type based on browser support
-        const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
-          ? 'audio/webm;codecs=opus' 
-          : MediaRecorder.isTypeSupported('audio/mp4') 
-            ? 'audio/mp4' 
-            : 'audio/webm';
+        const mimeTypes = [
+          'audio/webm;codecs=opus',
+          'audio/mp4',
+          'audio/webm'
+        ];
         
-        mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
+        let supportedMimeType = '';
+        for (const mimeType of mimeTypes) {
+          if (MediaRecorder.isTypeSupported(mimeType)) {
+            supportedMimeType = mimeType;
+            break;
+          }
+        }
+        
+        if (!supportedMimeType) {
+          supportedMimeType = 'audio/webm';
+        }
+        
+        const options = { mimeType: supportedMimeType };
+        mediaRecorder = new MediaRecorder(audioStream, options);
         recordedChunks = [];
         
         mediaRecorder.ondataavailable = (event) => {
@@ -1209,7 +1200,7 @@
         };
         
         mediaRecorder.onstop = () => {
-          const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+          const mimeType = mediaRecorder.mimeType || 'audio/webm';
           const audioBlob = new Blob(recordedChunks, { type: mimeType });
           const audioUrl = URL.createObjectURL(audioBlob);
           
@@ -1254,6 +1245,7 @@
       
       if (audioStream) {
         audioStream.getTracks().forEach(track => track.stop());
+        audioStream = null;
       }
     }
 
@@ -1270,6 +1262,7 @@
         // Stop all audio tracks
         if (audioStream) {
           audioStream.getTracks().forEach(track => track.stop());
+          audioStream = null;
         }
       }
     }
@@ -1277,31 +1270,58 @@
     // Start video recording
     async function startVideoRecording() {
       try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ 
-          audio: true, 
-          video: { 
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-            facingMode: "user"
-          } 
-        });
+        const constraints = {
+          audio: true,
+          video: {
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            facingMode: "user",
+            frameRate: { ideal: 24, max: 30 }
+          }
+        };
+        
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         
         // Set MIME type based on browser support
-        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
-          ? 'video/webm;codecs=vp9' 
-          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8') 
-            ? 'video/webm;codecs=vp8' 
-            : MediaRecorder.isTypeSupported('video/mp4') 
-              ? 'video/mp4' 
-              : 'video/webm';
+        const mimeTypes = [
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
+          'video/webm;codecs=h264,opus',
+          'video/mp4;codecs=h264,aac',
+          'video/webm',
+          'video/mp4'
+        ];
+        
+        let supportedMimeType = '';
+        for (const mimeType of mimeTypes) {
+          if (MediaRecorder.isTypeSupported(mimeType)) {
+            supportedMimeType = mimeType;
+            break;
+          }
+        }
+        
+        if (!supportedMimeType) {
+          supportedMimeType = 'video/webm';
+        }
+        
+        const options = {
+          mimeType: supportedMimeType,
+          audioBitsPerSecond: 128000,
+          videoBitsPerSecond: 2500000
+        };
         
         // Show camera preview
         videoPreview.srcObject = videoStream;
         videoPreview.style.display = 'block';
         videoPreview.muted = true;
-        videoPreview.play().catch(e => console.log('Preview play error:', e));
         
-        mediaRecorder = new MediaRecorder(videoStream, { mimeType: mimeType });
+        try {
+          await videoPreview.play();
+        } catch (playError) {
+          console.log('Preview play error:', playError);
+        }
+        
+        mediaRecorder = new MediaRecorder(videoStream, options);
         recordedChunks = [];
         
         mediaRecorder.ondataavailable = (event) => {
@@ -1310,7 +1330,7 @@
           }
         };
         
-        mediaRecorder.onstop = () => {
+        mediaRecorder.onstop = async () => {
           const mimeType = mediaRecorder.mimeType || 'video/webm';
           const videoBlob = new Blob(recordedChunks, { type: mimeType });
           const videoUrl = URL.createObjectURL(videoBlob);
@@ -1323,7 +1343,6 @@
           videoPreview.srcObject = null;
           videoPreview.src = videoUrl;
           videoPreview.muted = false;
-          videoPreview.load(); // Reload with the new source
           
           sendVideoButton.disabled = false;
           videoStatus.textContent = "Recording stopped. Preview available.";
@@ -1364,6 +1383,7 @@
       
       if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
       }
     }
 
@@ -1377,9 +1397,10 @@
         startVideoButton.disabled = false;
         stopVideoButton.disabled = true;
         
-        // Stop all video tracks (preview tracks are already stopped in onstop)
+        // Stop all video tracks
         if (videoStream) {
           videoStream.getTracks().forEach(track => track.stop());
+          videoStream = null;
         }
       }
     }
@@ -1389,9 +1410,41 @@
       try {
         const storageRef = storage.ref();
         const fileRef = storageRef.child(`wishes/${fileName}`);
-        const uploadTask = await fileRef.put(file);
-        const downloadURL = await uploadTask.ref.getDownloadURL();
-        return downloadURL;
+        
+        const metadata = {
+          contentType: file.type,
+          customMetadata: {
+            'uploadedBy': 'anniversaryApp',
+            'uploadDate': new Date().toISOString(),
+            'type': type
+          }
+        };
+        
+        const uploadTask = fileRef.put(file, metadata);
+        
+        return new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              // Progress tracking if needed
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log(`Upload is ${progress}% done`);
+            },
+            (error) => {
+              console.error('Upload error:', error);
+              reject(error);
+            },
+            async () => {
+              try {
+                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                resolve(downloadURL);
+              } catch (urlError) {
+                console.error('Error getting download URL:', urlError);
+                reject(urlError);
+              }
+            }
+          );
+        });
       } catch (error) {
         console.error('Error uploading file:', error);
         throw error;
@@ -1411,15 +1464,20 @@
         return;
       }
       
-      const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+      const mimeType = mediaRecorder.mimeType || 'audio/webm';
       const audioBlob = new Blob(recordedChunks, { type: mimeType });
+      
+      // Generate a safe filename
+      const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const timestamp = Date.now();
       const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
-      const fileName = `audio_${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExtension}`;
+      const fileName = `audio_${timestamp}_${safeName}.${fileExtension}`;
       
       try {
         audioStatus.textContent = "Uploading audio...";
         audioStatus.style.color = "#FF9800";
         sendAudioButton.disabled = true;
+        stopAudioButton.disabled = true;
         
         const audioUrl = await uploadFile(audioBlob, fileName, 'audio');
         
@@ -1427,8 +1485,10 @@
           name: name,
           type: 'audio',
           url: audioUrl,
-          timestamp: Date.now(),
-          date: new Date().toLocaleString()
+          timestamp: timestamp,
+          date: new Date().toLocaleString(),
+          fileSize: audioBlob.size,
+          mimeType: mimeType
         };
         
         const wishesRef = database.ref('wishes');
@@ -1436,26 +1496,34 @@
         
         audioStatus.textContent = "Audio wish submitted successfully!";
         audioStatus.style.color = "#4CAF50";
-        audioNameInput.value = '';
-        audioPreview.style.display = 'none';
-        audioPreview.src = '';
-        sendAudioButton.disabled = true;
-        stopAudioButton.disabled = true;
-        startAudioButton.disabled = false;
         
-        // Clear recorded chunks
-        recordedChunks = [];
-        
+        // Clear inputs and reset
         setTimeout(() => {
+          audioNameInput.value = '';
+          audioPreview.style.display = 'none';
+          audioPreview.src = '';
           audioModal.style.display = 'none';
           audioStatus.textContent = "Ready to record";
           audioStatus.style.color = "#333";
-        }, 2000);
+          audioTimer.textContent = "00:00";
+          
+          // Reset recording
+          recordedChunks = [];
+          resetAudioRecording();
+        }, 1500);
+        
       } catch (error) {
         console.error('Error submitting audio wish:', error);
         audioStatus.textContent = "Error submitting audio wish. Please try again.";
         audioStatus.style.color = "#f44336";
         sendAudioButton.disabled = false;
+        stopAudioButton.disabled = false;
+        
+        // Show more detailed error if available
+        if (error.code) {
+          console.error('Firebase error code:', error.code);
+          console.error('Firebase error message:', error.message);
+        }
       }
     }
 
@@ -1474,13 +1542,18 @@
       
       const mimeType = mediaRecorder.mimeType || 'video/webm';
       const videoBlob = new Blob(recordedChunks, { type: mimeType });
+      
+      // Generate a safe filename
+      const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const timestamp = Date.now();
       const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
-      const fileName = `video_${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExtension}`;
+      const fileName = `video_${timestamp}_${safeName}.${fileExtension}`;
       
       try {
         videoStatus.textContent = "Uploading video...";
         videoStatus.style.color = "#FF9800";
         sendVideoButton.disabled = true;
+        stopVideoButton.disabled = true;
         
         const videoUrl = await uploadFile(videoBlob, fileName, 'video');
         
@@ -1488,8 +1561,10 @@
           name: name,
           type: 'video',
           url: videoUrl,
-          timestamp: Date.now(),
-          date: new Date().toLocaleString()
+          timestamp: timestamp,
+          date: new Date().toLocaleString(),
+          fileSize: videoBlob.size,
+          mimeType: mimeType
         };
         
         const wishesRef = database.ref('wishes');
@@ -1497,26 +1572,34 @@
         
         videoStatus.textContent = "Video wish submitted successfully!";
         videoStatus.style.color = "#4CAF50";
-        videoNameInput.value = '';
-        videoPreview.style.display = 'none';
-        videoPreview.src = '';
-        sendVideoButton.disabled = true;
-        stopVideoButton.disabled = true;
-        startVideoButton.disabled = false;
         
-        // Clear recorded chunks
-        recordedChunks = [];
-        
+        // Clear inputs and reset
         setTimeout(() => {
+          videoNameInput.value = '';
+          videoPreview.style.display = 'none';
+          videoPreview.src = '';
           videoModal.style.display = 'none';
           videoStatus.textContent = "Ready to record";
           videoStatus.style.color = "#333";
-        }, 2000);
+          videoTimer.textContent = "00:00";
+          
+          // Reset recording
+          recordedChunks = [];
+          resetVideoRecording();
+        }, 1500);
+        
       } catch (error) {
         console.error('Error submitting video wish:', error);
         videoStatus.textContent = "Error submitting video wish. Please try again.";
         videoStatus.style.color = "#f44336";
         sendVideoButton.disabled = false;
+        stopVideoButton.disabled = false;
+        
+        // Show more detailed error if available
+        if (error.code) {
+          console.error('Firebase error code:', error.code);
+          console.error('Firebase error message:', error.message);
+        }
       }
     }
 
@@ -1552,6 +1635,7 @@
           // Hide success message after 3 seconds
           setTimeout(() => {
             successMessage.style.display = 'none';
+            wishesModal.style.display = 'none';
           }, 3000);
         })
         .catch((error) => {
@@ -1573,11 +1657,15 @@
         }
         
         // Convert to array and sort by timestamp (newest first)
-        const wishesArray = Object.values(wishes);
+        const wishesArray = Object.entries(wishes).map(([key, value]) => ({
+          id: key,
+          ...value
+        }));
+        
         wishesArray.sort((a, b) => b.timestamp - a.timestamp);
         
         // Display wishes
-        wishesArray.forEach((wish, index) => {
+        wishesArray.forEach((wish) => {
           const wishElement = document.createElement('div');
           wishElement.className = `wish-item ${wish.type === 'audio' ? 'wish-audio-item' : wish.type === 'video' ? 'wish-video-item' : ''}`;
           
@@ -1585,14 +1673,14 @@
           if (wish.type === 'text') {
             wishContent = `
               <div class="wish-author">
-                <i class="fas fa-user"></i> ${wish.name}
+                <i class="fas fa-user"></i> ${wish.name || 'Anonymous'}
               </div>
-              <div class="wish-text">${wish.wish}</div>
+              <div class="wish-text">${wish.wish || ''}</div>
             `;
           } else if (wish.type === 'audio') {
             wishContent = `
               <div class="wish-author">
-                <i class="fas fa-microphone"></i> ${wish.name}
+                <i class="fas fa-microphone"></i> ${wish.name || 'Anonymous'}
               </div>
               <div class="wish-text">Audio message</div>
               <div class="media-controls">
@@ -1607,7 +1695,7 @@
           } else if (wish.type === 'video') {
             wishContent = `
               <div class="wish-author">
-                <i class="fas fa-video"></i> ${wish.name}
+                <i class="fas fa-video"></i> ${wish.name || 'Anonymous'}
               </div>
               <div class="wish-text">Video message</div>
               <div class="media-controls">
@@ -1622,7 +1710,7 @@
           }
           
           wishElement.innerHTML = wishContent + `
-            <div class="wish-time">${wish.date}</div>
+            <div class="wish-time">${wish.date || 'Unknown date'}</div>
           `;
           wishesList.appendChild(wishElement);
         });
@@ -1739,6 +1827,7 @@
       audioPreview.src = '';
       audioStatus.textContent = "Ready to record";
       audioStatus.style.color = "#333";
+      audioTimer.textContent = "00:00";
       recordedChunks = [];
     });
 
@@ -1751,16 +1840,17 @@
       videoPreview.src = '';
       videoStatus.textContent = "Ready to record";
       videoStatus.style.color = "#333";
+      videoTimer.textContent = "00:00";
       recordedChunks = [];
     });
 
     // Close modal event listeners
     closeModal.addEventListener("click", () => {
       wishesModal.style.display = "none";
+      successMessage.style.display = 'none';
     });
 
     closeAudioModal.addEventListener("click", () => {
-      audioModal.style.display = "none";
       // Stop recording if in progress
       if (isRecording && currentRecordingType === 'audio') {
         stopAudioRecording();
@@ -1769,11 +1859,15 @@
       resetAudioRecording();
       audioPreview.style.display = 'none';
       audioPreview.src = '';
+      audioModal.style.display = 'none';
+      audioNameInput.value = '';
+      audioStatus.textContent = "Ready to record";
+      audioStatus.style.color = "#333";
+      audioTimer.textContent = "00:00";
       recordedChunks = [];
     });
 
     closeVideoModal.addEventListener("click", () => {
-      videoModal.style.display = "none";
       // Stop recording if in progress
       if (isRecording && currentRecordingType === 'video') {
         stopVideoRecording();
@@ -1782,6 +1876,11 @@
       resetVideoRecording();
       videoPreview.style.display = 'none';
       videoPreview.src = '';
+      videoModal.style.display = 'none';
+      videoNameInput.value = '';
+      videoStatus.textContent = "Ready to record";
+      videoStatus.style.color = "#333";
+      videoTimer.textContent = "00:00";
       recordedChunks = [];
     });
 
@@ -1810,25 +1909,38 @@
     window.addEventListener("click", (event) => {
       if (event.target === wishesModal) {
         wishesModal.style.display = "none";
+        successMessage.style.display = 'none';
       }
       if (event.target === audioModal) {
-        audioModal.style.display = "none";
+        // Stop recording if in progress
         if (isRecording && currentRecordingType === 'audio') {
           stopAudioRecording();
         }
+        // Reset state
         resetAudioRecording();
         audioPreview.style.display = 'none';
         audioPreview.src = '';
+        audioModal.style.display = 'none';
+        audioNameInput.value = '';
+        audioStatus.textContent = "Ready to record";
+        audioStatus.style.color = "#333";
+        audioTimer.textContent = "00:00";
         recordedChunks = [];
       }
       if (event.target === videoModal) {
-        videoModal.style.display = "none";
+        // Stop recording if in progress
         if (isRecording && currentRecordingType === 'video') {
           stopVideoRecording();
         }
+        // Reset state
         resetVideoRecording();
         videoPreview.style.display = 'none';
         videoPreview.src = '';
+        videoModal.style.display = 'none';
+        videoNameInput.value = '';
+        videoStatus.textContent = "Ready to record";
+        videoStatus.style.color = "#333";
+        videoTimer.textContent = "00:00";
         recordedChunks = [];
       }
       if (event.target === wishesDisplayModal) {
@@ -1841,6 +1953,24 @@
       initializeSlideshow();
       startSlideshow();
       loadWishes(); // Load wishes on page load
+      
+      // Add a dummy wish to display all wishes
+      const showAllWishes = document.createElement('div');
+      showAllWishes.className = 'wish-item';
+      showAllWishes.innerHTML = `
+        <div class="wish-author">
+          <i class="fas fa-gift"></i> View All Wishes
+        </div>
+        <div class="wish-text">Click here to see all the wonderful wishes from everyone!</div>
+        <button class="media-button" id="show-all-wishes" style="margin-top: 10px; width: 100%;">
+          <i class="fas fa-eye"></i> View All Wishes
+        </button>
+      `;
+      wishesList.appendChild(showAllWishes);
+      
+      document.getElementById('show-all-wishes')?.addEventListener('click', () => {
+        wishesDisplayModal.style.display = "flex";
+      });
     });
   </script>
 </body>
