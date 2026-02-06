@@ -163,14 +163,14 @@
     }
 
     .close-notes {
-      background: none;
+      background: #d6336c;
+      color: white;
       border: none;
-      color: #d6336c;
-      font-size: 1.5rem;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -178,7 +178,7 @@
     }
 
     .close-notes:hover {
-      background-color: #f5d4d4;
+      background: #b52a57;
       transform: rotate(90deg);
     }
 
@@ -498,12 +498,14 @@
       margin: 20px auto;
       display: none;
       max-width: 100%;
+      border-radius: 10px;
+      background: #f5f5f5;
+      padding: 10px;
     }
 
     .video-preview {
       width: 100%;
       max-height: 300px;
-      border-radius: 10px;
       background: #000;
     }
 
@@ -838,9 +840,8 @@
 
     <!-- Notes Section - Initially Hidden at Bottom -->
     <div class="notes" id="notes-section">
-      <h2>
-        Special Notes
-        <button class="close-notes" id="close-notes" aria-label="Close notes">
+      <h2>Special Notes
+        <button class="close-notes" id="close-notes">
           <i class="fas fa-times"></i>
         </button>
       </h2>
@@ -1055,7 +1056,6 @@
     let recordingSeconds = 0;
     let isRecording = false;
     let currentRecordingType = ''; // 'audio' or 'video'
-    let recordedBlob = null;
 
     // Initialize slideshow with all images
     function initializeSlideshow() {
@@ -1184,33 +1184,23 @@
     // Start audio recording
     async function startAudioRecording() {
       try {
-        // Stop any existing stream
-        if (audioStream) {
-          audioStream.getTracks().forEach(track => track.stop());
-        }
-        
         audioStream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             sampleRate: 44100
-          } 
+          }
         });
         
-        // Use a more compatible MIME type
-        const options = { 
-          mimeType: 'audio/webm;codecs=opus' 
-        };
+        // Set MIME type based on browser support
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
+          ? 'audio/webm;codecs=opus' 
+          : MediaRecorder.isTypeSupported('audio/mp4') 
+            ? 'audio/mp4' 
+            : 'audio/webm';
         
-        try {
-          mediaRecorder = new MediaRecorder(audioStream, options);
-        } catch (e) {
-          console.warn('Preferred MIME type not supported, using default:', e);
-          mediaRecorder = new MediaRecorder(audioStream);
-        }
-        
+        mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
         recordedChunks = [];
-        recordedBlob = null;
         
         mediaRecorder.ondataavailable = (event) => {
           if (event.data && event.data.size > 0) {
@@ -1219,18 +1209,12 @@
         };
         
         mediaRecorder.onstop = () => {
-          recordedBlob = new Blob(recordedChunks, { 
-            type: mediaRecorder.mimeType || 'audio/webm' 
-          });
+          const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+          const audioBlob = new Blob(recordedChunks, { type: mimeType });
+          const audioUrl = URL.createObjectURL(audioBlob);
           
-          // Create object URL for preview
-          const audioUrl = URL.createObjectURL(recordedBlob);
           audioPreview.src = audioUrl;
           audioPreview.style.display = 'block';
-          
-          // Force audio element to reload
-          audioPreview.load();
-          
           sendAudioButton.disabled = false;
           audioStatus.textContent = "Recording stopped. Preview available.";
           audioStatus.style.color = "#4CAF50";
@@ -1240,30 +1224,42 @@
           console.error('MediaRecorder error:', event.error);
           audioStatus.textContent = "Recording error. Please try again.";
           audioStatus.style.color = "#f44336";
+          resetAudioRecording();
         };
         
-        mediaRecorder.start(100); // Collect data every 100ms
+        mediaRecorder.start(1000); // Collect data every 1 second
         isRecording = true;
         currentRecordingType = 'audio';
         startTimer();
         
         startAudioButton.disabled = true;
         stopAudioButton.disabled = false;
-        sendAudioButton.disabled = true;
         audioStatus.textContent = "Recording... Speak now!";
-        audioStatus.style.color = "#FF9800";
-        
+        audioStatus.style.color = "#4CAF50";
       } catch (error) {
         console.error('Error accessing microphone:', error);
-        audioStatus.textContent = "Error accessing microphone. Please check permissions and try again.";
+        audioStatus.textContent = "Error accessing microphone. Please check permissions.";
         audioStatus.style.color = "#f44336";
-        startAudioButton.disabled = false;
+        resetAudioRecording();
+      }
+    }
+
+    // Reset audio recording state
+    function resetAudioRecording() {
+      startAudioButton.disabled = false;
+      stopAudioButton.disabled = true;
+      sendAudioButton.disabled = true;
+      isRecording = false;
+      stopTimer();
+      
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
       }
     }
 
     // Stop audio recording
     function stopAudioRecording() {
-      if (mediaRecorder && isRecording && currentRecordingType === 'audio') {
+      if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         isRecording = false;
         stopTimer();
@@ -1274,7 +1270,6 @@
         // Stop all audio tracks
         if (audioStream) {
           audioStream.getTracks().forEach(track => track.stop());
-          audioStream = null;
         }
       }
     }
@@ -1282,42 +1277,32 @@
     // Start video recording
     async function startVideoRecording() {
       try {
-        // Stop any existing stream
-        if (videoStream) {
-          videoStream.getTracks().forEach(track => track.stop());
-        }
-        
         videoStream = await navigator.mediaDevices.getUserMedia({ 
           audio: true, 
           video: { 
             width: { ideal: 640 },
             height: { ideal: 480 },
-            facingMode: 'user'
+            facingMode: "user"
           } 
         });
+        
+        // Set MIME type based on browser support
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
+          ? 'video/webm;codecs=vp9' 
+          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8') 
+            ? 'video/webm;codecs=vp8' 
+            : MediaRecorder.isTypeSupported('video/mp4') 
+              ? 'video/mp4' 
+              : 'video/webm';
         
         // Show camera preview
         videoPreview.srcObject = videoStream;
         videoPreview.style.display = 'block';
         videoPreview.muted = true;
-        videoPreview.controls = false;
-        videoPreview.play().catch(e => console.log('Video play error:', e));
+        videoPreview.play().catch(e => console.log('Preview play error:', e));
         
-        // Use a more compatible MIME type
-        const options = { 
-          mimeType: 'video/webm;codecs=vp8,opus',
-          videoBitsPerSecond: 2500000 // 2.5 Mbps
-        };
-        
-        try {
-          mediaRecorder = new MediaRecorder(videoStream, options);
-        } catch (e) {
-          console.warn('Preferred MIME type not supported, using default:', e);
-          mediaRecorder = new MediaRecorder(videoStream);
-        }
-        
+        mediaRecorder = new MediaRecorder(videoStream, { mimeType: mimeType });
         recordedChunks = [];
-        recordedBlob = null;
         
         mediaRecorder.ondataavailable = (event) => {
           if (event.data && event.data.size > 0) {
@@ -1326,17 +1311,19 @@
         };
         
         mediaRecorder.onstop = () => {
-          recordedBlob = new Blob(recordedChunks, { 
-            type: mediaRecorder.mimeType || 'video/webm' 
-          });
+          const mimeType = mediaRecorder.mimeType || 'video/webm';
+          const videoBlob = new Blob(recordedChunks, { type: mimeType });
+          const videoUrl = URL.createObjectURL(videoBlob);
           
-          // Create object URL for preview
-          const videoUrl = URL.createObjectURL(recordedBlob);
+          // Stop preview stream
+          if (videoPreview.srcObject) {
+            videoPreview.srcObject.getTracks().forEach(track => track.stop());
+          }
+          
           videoPreview.srcObject = null;
           videoPreview.src = videoUrl;
           videoPreview.muted = false;
-          videoPreview.controls = true;
-          videoPreview.style.display = 'block';
+          videoPreview.load(); // Reload with the new source
           
           sendVideoButton.disabled = false;
           videoStatus.textContent = "Recording stopped. Preview available.";
@@ -1347,30 +1334,42 @@
           console.error('MediaRecorder error:', event.error);
           videoStatus.textContent = "Recording error. Please try again.";
           videoStatus.style.color = "#f44336";
+          resetVideoRecording();
         };
         
-        mediaRecorder.start(100); // Collect data every 100ms
+        mediaRecorder.start(1000); // Collect data every 1 second
         isRecording = true;
         currentRecordingType = 'video';
         startTimer();
         
         startVideoButton.disabled = true;
         stopVideoButton.disabled = false;
-        sendVideoButton.disabled = true;
         videoStatus.textContent = "Recording... Smile!";
-        videoStatus.style.color = "#FF9800";
-        
+        videoStatus.style.color = "#4CAF50";
       } catch (error) {
         console.error('Error accessing camera:', error);
-        videoStatus.textContent = "Error accessing camera. Please check permissions and try again.";
+        videoStatus.textContent = "Error accessing camera. Please check permissions.";
         videoStatus.style.color = "#f44336";
-        startVideoButton.disabled = false;
+        resetVideoRecording();
+      }
+    }
+
+    // Reset video recording state
+    function resetVideoRecording() {
+      startVideoButton.disabled = false;
+      stopVideoButton.disabled = true;
+      sendVideoButton.disabled = true;
+      isRecording = false;
+      stopTimer();
+      
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
       }
     }
 
     // Stop video recording
     function stopVideoRecording() {
-      if (mediaRecorder && isRecording && currentRecordingType === 'video') {
+      if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         isRecording = false;
         stopTimer();
@@ -1378,10 +1377,9 @@
         startVideoButton.disabled = false;
         stopVideoButton.disabled = true;
         
-        // Stop all video tracks
+        // Stop all video tracks (preview tracks are already stopped in onstop)
         if (videoStream) {
           videoStream.getTracks().forEach(track => track.stop());
-          videoStream = null;
         }
       }
     }
@@ -1391,18 +1389,8 @@
       try {
         const storageRef = storage.ref();
         const fileRef = storageRef.child(`wishes/${fileName}`);
-        
-        // Show upload progress
-        const statusElement = currentRecordingType === 'audio' ? audioStatus : videoStatus;
-        statusElement.textContent = "Uploading... Please wait.";
-        statusElement.style.color = "#FF9800";
-        
-        const uploadTask = fileRef.put(file);
-        
-        // Wait for upload to complete
-        await uploadTask;
-        
-        const downloadURL = await fileRef.getDownloadURL();
+        const uploadTask = await fileRef.put(file);
+        const downloadURL = await uploadTask.ref.getDownloadURL();
         return downloadURL;
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -1418,19 +1406,22 @@
         return;
       }
       
-      if (!recordedBlob) {
+      if (recordedChunks.length === 0) {
         alert('Please record an audio message first.');
         return;
       }
       
-      const fileName = `audio_${Date.now()}_${name.replace(/\s+/g, '_')}.webm`;
+      const mimeType = mediaRecorder.mimeType || 'audio/webm;codecs=opus';
+      const audioBlob = new Blob(recordedChunks, { type: mimeType });
+      const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const fileName = `audio_${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExtension}`;
       
       try {
         audioStatus.textContent = "Uploading audio...";
         audioStatus.style.color = "#FF9800";
         sendAudioButton.disabled = true;
         
-        const audioUrl = await uploadFile(recordedBlob, fileName, 'audio');
+        const audioUrl = await uploadFile(audioBlob, fileName, 'audio');
         
         const wishData = {
           name: name,
@@ -1452,12 +1443,7 @@
         stopAudioButton.disabled = true;
         startAudioButton.disabled = false;
         
-        // Clean up blob URL
-        if (audioPreview.src) {
-          URL.revokeObjectURL(audioPreview.src);
-        }
-        
-        recordedBlob = null;
+        // Clear recorded chunks
         recordedChunks = [];
         
         setTimeout(() => {
@@ -1481,19 +1467,22 @@
         return;
       }
       
-      if (!recordedBlob) {
+      if (recordedChunks.length === 0) {
         alert('Please record a video message first.');
         return;
       }
       
-      const fileName = `video_${Date.now()}_${name.replace(/\s+/g, '_')}.webm`;
+      const mimeType = mediaRecorder.mimeType || 'video/webm';
+      const videoBlob = new Blob(recordedChunks, { type: mimeType });
+      const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const fileName = `video_${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExtension}`;
       
       try {
         videoStatus.textContent = "Uploading video...";
         videoStatus.style.color = "#FF9800";
         sendVideoButton.disabled = true;
         
-        const videoUrl = await uploadFile(recordedBlob, fileName, 'video');
+        const videoUrl = await uploadFile(videoBlob, fileName, 'video');
         
         const wishData = {
           name: name,
@@ -1515,12 +1504,7 @@
         stopVideoButton.disabled = true;
         startVideoButton.disabled = false;
         
-        // Clean up blob URL
-        if (videoPreview.src) {
-          URL.revokeObjectURL(videoPreview.src);
-        }
-        
-        recordedBlob = null;
+        // Clear recorded chunks
         recordedChunks = [];
         
         setTimeout(() => {
@@ -1589,11 +1573,11 @@
         }
         
         // Convert to array and sort by timestamp (newest first)
-        const wishesArray = Object.entries(wishes).map(([id, wish]) => ({ id, ...wish }));
+        const wishesArray = Object.values(wishes);
         wishesArray.sort((a, b) => b.timestamp - a.timestamp);
         
         // Display wishes
-        wishesArray.forEach((wish) => {
+        wishesArray.forEach((wish, index) => {
           const wishElement = document.createElement('div');
           wishElement.className = `wish-item ${wish.type === 'audio' ? 'wish-audio-item' : wish.type === 'video' ? 'wish-video-item' : ''}`;
           
@@ -1612,8 +1596,7 @@
               </div>
               <div class="wish-text">Audio message</div>
               <div class="media-controls">
-                <audio id="audio-${wish.id}" src="${wish.url}" preload="none"></audio>
-                <button class="media-button" onclick="playAudio('${wish.id}')">
+                <button class="media-button" onclick="playAudio('${wish.url}')">
                   <i class="fas fa-play"></i> Play
                 </button>
                 <a href="${wish.url}" target="_blank" class="media-button" style="text-decoration: none;">
@@ -1628,7 +1611,7 @@
               </div>
               <div class="wish-text">Video message</div>
               <div class="media-controls">
-                <button class="media-button" onclick="playVideo('${wish.id}')">
+                <button class="media-button" onclick="playVideo('${wish.url}')">
                   <i class="fas fa-play"></i> Play
                 </button>
                 <a href="${wish.url}" target="_blank" class="media-button" style="text-decoration: none;">
@@ -1647,61 +1630,17 @@
     }
 
     // Play audio function
-    function playAudio(id) {
-      const audioElement = document.getElementById(`audio-${id}`);
-      if (audioElement) {
-        audioElement.play().catch(e => {
-          console.log('Audio play failed:', e);
-          // Fallback to opening in new tab
-          window.open(audioElement.src, '_blank');
-        });
-      }
+    function playAudio(url) {
+      const audio = new Audio(url);
+      audio.play().catch(e => {
+        console.error('Error playing audio:', e);
+        alert('Error playing audio. Please try downloading it instead.');
+      });
     }
 
     // Play video function
-    function playVideo(id) {
-      // Create a modal to play video
-      const videoModal = document.createElement('div');
-      videoModal.style.position = 'fixed';
-      videoModal.style.top = '0';
-      videoModal.style.left = '0';
-      videoModal.style.width = '100%';
-      videoModal.style.height = '100%';
-      videoModal.style.backgroundColor = 'rgba(0,0,0,0.9)';
-      videoModal.style.zIndex = '2000';
-      videoModal.style.display = 'flex';
-      videoModal.style.justifyContent = 'center';
-      videoModal.style.alignItems = 'center';
-      
-      const videoElement = document.createElement('video');
-      videoElement.src = document.querySelector(`#wishes-list [id^="audio-${id}"]`)?.nextElementElement?.href || '';
-      videoElement.controls = true;
-      videoElement.autoplay = true;
-      videoElement.style.maxWidth = '90%';
-      videoElement.style.maxHeight = '90%';
-      
-      const closeButton = document.createElement('button');
-      closeButton.innerHTML = '&times;';
-      closeButton.style.position = 'absolute';
-      closeButton.style.top = '20px';
-      closeButton.style.right = '20px';
-      closeButton.style.background = 'none';
-      closeButton.style.border = 'none';
-      closeButton.style.color = 'white';
-      closeButton.style.fontSize = '2rem';
-      closeButton.style.cursor = 'pointer';
-      closeButton.onclick = () => document.body.removeChild(videoModal);
-      
-      videoModal.appendChild(videoElement);
-      videoModal.appendChild(closeButton);
-      document.body.appendChild(videoModal);
-      
-      // Close modal when clicking outside video
-      videoModal.onclick = (e) => {
-        if (e.target === videoModal) {
-          document.body.removeChild(videoModal);
-        }
-      };
+    function playVideo(url) {
+      window.open(url, '_blank');
     }
 
     // Start celebration function
@@ -1794,11 +1733,25 @@
     floatingAudio.addEventListener("click", () => {
       audioModal.style.display = "flex";
       audioNameInput.focus();
+      // Reset recording state when opening modal
+      resetAudioRecording();
+      audioPreview.style.display = 'none';
+      audioPreview.src = '';
+      audioStatus.textContent = "Ready to record";
+      audioStatus.style.color = "#333";
+      recordedChunks = [];
     });
 
     floatingVideo.addEventListener("click", () => {
       videoModal.style.display = "flex";
       videoNameInput.focus();
+      // Reset recording state when opening modal
+      resetVideoRecording();
+      videoPreview.style.display = 'none';
+      videoPreview.src = '';
+      videoStatus.textContent = "Ready to record";
+      videoStatus.style.color = "#333";
+      recordedChunks = [];
     });
 
     // Close modal event listeners
@@ -1812,6 +1765,11 @@
       if (isRecording && currentRecordingType === 'audio') {
         stopAudioRecording();
       }
+      // Reset state
+      resetAudioRecording();
+      audioPreview.style.display = 'none';
+      audioPreview.src = '';
+      recordedChunks = [];
     });
 
     closeVideoModal.addEventListener("click", () => {
@@ -1820,6 +1778,11 @@
       if (isRecording && currentRecordingType === 'video') {
         stopVideoRecording();
       }
+      // Reset state
+      resetVideoRecording();
+      videoPreview.style.display = 'none';
+      videoPreview.src = '';
+      recordedChunks = [];
     });
 
     closeDisplayModal.addEventListener("click", () => {
@@ -1853,28 +1816,23 @@
         if (isRecording && currentRecordingType === 'audio') {
           stopAudioRecording();
         }
+        resetAudioRecording();
+        audioPreview.style.display = 'none';
+        audioPreview.src = '';
+        recordedChunks = [];
       }
       if (event.target === videoModal) {
         videoModal.style.display = "none";
         if (isRecording && currentRecordingType === 'video') {
           stopVideoRecording();
         }
+        resetVideoRecording();
+        videoPreview.style.display = 'none';
+        videoPreview.src = '';
+        recordedChunks = [];
       }
       if (event.target === wishesDisplayModal) {
         wishesDisplayModal.style.display = "none";
-      }
-    });
-
-    // Clean up when page is closed
-    window.addEventListener('beforeunload', () => {
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-      }
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-      }
-      if (slideshowInterval) {
-        clearInterval(slideshowInterval);
       }
     });
 
