@@ -201,6 +201,8 @@
       text-align: center;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       animation: modal-appear 0.5s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     @keyframes modal-appear {
@@ -225,6 +227,82 @@
       margin-bottom: 20px;
     }
 
+    .wish-form {
+      text-align: left;
+      margin: 20px 0;
+    }
+
+    .wish-form label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .wish-form input,
+    .wish-form textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .wish-form textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .media-controls {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .media-button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .record-button {
+      background-color: #36a1d6;
+      color: white;
+    }
+
+    .record-button:hover {
+      background-color: #2a8ab5;
+    }
+
+    .record-button.recording {
+      background-color: #d6336c;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    .preview {
+      margin: 15px 0;
+    }
+
+    .preview video,
+    .preview audio {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 5px;
+    }
+
     .close-modal {
       padding: 10px 25px;
       background-color: #d6336c;
@@ -233,10 +311,79 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 1rem;
+      margin-top: 10px;
     }
 
     .close-modal:hover {
       background-color: #b52a57;
+    }
+
+    /* Wishes Display */
+    .wishes-display {
+      margin-top: 40px;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .wishes-display h2 {
+      color: #d6336c;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .wishes-list {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .wish-item {
+      background: #f9f9f9;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border-left: 4px solid #d6336c;
+    }
+
+    .wish-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .wish-name {
+      font-weight: bold;
+      color: #d6336c;
+      font-size: 1.1rem;
+    }
+
+    .wish-time {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .wish-text {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    .wish-media {
+      margin-top: 10px;
+    }
+
+    .wish-media audio,
+    .wish-media video {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 5px;
     }
 
     /* Background Music */
@@ -294,6 +441,14 @@
         width: 90%;
         max-width: 300px;
       }
+      
+      .media-controls {
+        flex-direction: column;
+      }
+      
+      .media-button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -324,15 +479,57 @@
       <button class="action-button wishes-button" id="wishes-button">Send Wishes</button>
     </div>
 
+    <!-- Wishes Display Section -->
+    <div class="wishes-display">
+      <h2>Wishes from Loved Ones 💌</h2>
+      <div class="wishes-list" id="wishes-list">
+        <!-- Wishes will be loaded here from Firebase -->
+      </div>
+    </div>
+
     <!-- Wishes Modal -->
     <div class="wishes-modal" id="wishes-modal">
       <div class="wishes-content">
-        <h2>Warmest Wishes!</h2>
-        <p>To the most wonderful couple,</p>
-        <p>May your 10th wedding anniversary be filled with joy, laughter, and cherished memories. Here's to a decade of beautiful moments and to many more years of love and happiness together!</p>
-        <p>With all our love,</p>
-        <p>Family & Friends ❤️</p>
-        <button class="close-modal" id="close-modal">Close</button>
+        <h2>Send Your Wishes 💝</h2>
+        
+        <form id="wish-form" class="wish-form">
+          <label for="name">Your Name:</label>
+          <input type="text" id="name" required placeholder="Enter your name">
+          
+          <label for="wish-text">Your Wish:</label>
+          <textarea id="wish-text" required placeholder="Write your heartfelt message..."></textarea>
+          
+          <!-- Audio Recording -->
+          <label>Audio Wish (Optional):</label>
+          <div class="media-controls">
+            <button type="button" class="media-button record-button" id="audio-record-btn">
+              🎤 Start Audio Recording
+            </button>
+            <button type="button" class="media-button" id="audio-stop-btn" disabled>
+              ⏹️ Stop Recording
+            </button>
+          </div>
+          <div class="preview" id="audio-preview"></div>
+          
+          <!-- Video Recording -->
+          <label>Video Wish (Optional):</label>
+          <div class="media-controls">
+            <button type="button" class="media-button record-button" id="video-record-btn">
+              📹 Start Video Recording
+            </button>
+            <button type="button" class="media-button" id="video-stop-btn" disabled>
+              ⏹️ Stop Recording
+            </button>
+          </div>
+          <div class="preview" id="video-preview"></div>
+          
+          <div class="media-controls">
+            <button type="submit" class="media-button" style="background-color: #4CAF50; color: white;">
+              ✨ Send Wish
+            </button>
+            <button type="button" class="close-modal" id="close-modal">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -343,7 +540,27 @@
     </audio>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
   <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCH0t_30dpF7oasM84zNcmiWtz1E9GeT7s",
+      authDomain: "qeliz-e4340.firebaseapp.com",
+      databaseURL: "https://qeliz-e4340-default-rtdb.firebaseio.com",
+      projectId: "qeliz-e4340",
+      storageBucket: "qeliz-e4340.firebasestorage.app",
+      messagingSenderId: "1007230953888",
+      appId: "1:1007230953888:web:fb9b99ac3c3bc1b9a89cc5",
+      measurementId: "G-EQHZDL74BJ"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     // Array of image paths
     const images = [
       "images/image0.jpeg",
@@ -370,6 +587,14 @@
     let slideshowInterval;
     const slideshowContainer = document.getElementById("slideshow-container");
     const downloadLink = document.getElementById("download-link");
+
+    // Recording variables
+    let audioRecorder;
+    let videoRecorder;
+    let audioChunks = [];
+    let videoChunks = [];
+    let audioBlob;
+    let videoBlob;
 
     // Initialize slideshow with all images
     function initializeSlideshow() {
@@ -447,7 +672,6 @@
           setTimeout(() => {
             nextSlide.style.transform = 'scale(1)';
           }, 10);
-          break;
         case 'rotate':
           nextSlide.style.transform = 'rotate(180deg)';
           nextSlide.classList.add('active');
@@ -485,6 +709,211 @@
     const wishesButton = document.getElementById("wishes-button");
     const wishesModal = document.getElementById("wishes-modal");
     const closeModal = document.getElementById("close-modal");
+    const wishForm = document.getElementById("wish-form");
+    const wishesList = document.getElementById("wishes-list");
+
+    // Audio Recording Functions
+    const audioRecordBtn = document.getElementById("audio-record-btn");
+    const audioStopBtn = document.getElementById("audio-stop-btn");
+    const audioPreview = document.getElementById("audio-preview");
+
+    async function startAudioRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        audioRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+        
+        audioRecorder.onstop = () => {
+          audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const audioURL = URL.createObjectURL(audioBlob);
+          
+          // Display audio preview
+          audioPreview.innerHTML = `
+            <audio controls>
+              <source src="${audioURL}" type="audio/webm">
+              Your browser does not support the audio element.
+            </audio>
+            <p>Audio recorded! (${Math.round(audioBlob.size / 1024)} KB)</p>
+          `;
+        };
+        
+        audioRecorder.start();
+        audioRecordBtn.textContent = "🎤 Recording...";
+        audioRecordBtn.classList.add("recording");
+        audioStopBtn.disabled = false;
+      } catch (error) {
+        alert("Error accessing microphone: " + error.message);
+      }
+    }
+
+    function stopAudioRecording() {
+      if (audioRecorder && audioRecorder.state !== "inactive") {
+        audioRecorder.stop();
+        audioRecorder.stream.getTracks().forEach(track => track.stop());
+        audioRecordBtn.textContent = "🎤 Start Audio Recording";
+        audioRecordBtn.classList.remove("recording");
+        audioStopBtn.disabled = true;
+      }
+    }
+
+    // Video Recording Functions
+    const videoRecordBtn = document.getElementById("video-record-btn");
+    const videoStopBtn = document.getElementById("video-stop-btn");
+    const videoPreview = document.getElementById("video-preview");
+
+    async function startVideoRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        
+        videoRecorder = new MediaRecorder(stream);
+        videoChunks = [];
+        
+        videoRecorder.ondataavailable = (event) => {
+          videoChunks.push(event.data);
+        };
+        
+        videoRecorder.onstop = () => {
+          videoBlob = new Blob(videoChunks, { type: 'video/webm' });
+          const videoURL = URL.createObjectURL(videoBlob);
+          
+          // Display video preview
+          videoPreview.innerHTML = `
+            <video controls width="300">
+              <source src="${videoURL}" type="video/webm">
+              Your browser does not support the video element.
+            </video>
+            <p>Video recorded! (${Math.round(videoBlob.size / 1024)} KB)</p>
+          `;
+        };
+        
+        videoRecorder.start();
+        videoRecordBtn.textContent = "📹 Recording...";
+        videoRecordBtn.classList.add("recording");
+        videoStopBtn.disabled = false;
+      } catch (error) {
+        alert("Error accessing camera: " + error.message);
+      }
+    }
+
+    function stopVideoRecording() {
+      if (videoRecorder && videoRecorder.state !== "inactive") {
+        videoRecorder.stop();
+        videoRecorder.stream.getTracks().forEach(track => track.stop());
+        videoRecordBtn.textContent = "📹 Start Video Recording";
+        videoRecordBtn.classList.remove("recording");
+        videoStopBtn.disabled = true;
+      }
+    }
+
+    // Convert blob to base64 for Firebase storage
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    // Save wish to Firebase
+    async function saveWish(name, wishText, audioBlob = null, videoBlob = null) {
+      const wishData = {
+        name: name,
+        text: wishText,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        date: new Date().toLocaleString()
+      };
+
+      // Convert audio blob to base64 if exists
+      if (audioBlob) {
+        try {
+          wishData.audio = await blobToBase64(audioBlob);
+          wishData.audioSize = audioBlob.size;
+        } catch (error) {
+          console.error("Error converting audio:", error);
+        }
+      }
+
+      // Convert video blob to base64 if exists
+      if (videoBlob) {
+        try {
+          wishData.video = await blobToBase64(videoBlob);
+          wishData.videoSize = videoBlob.size;
+        } catch (error) {
+          console.error("Error converting video:", error);
+        }
+      }
+
+      // Save to Firebase
+      const newWishRef = database.ref('wishes').push();
+      return newWishRef.set(wishData);
+    }
+
+    // Load wishes from Firebase
+    function loadWishes() {
+      const wishesRef = database.ref('wishes');
+      
+      wishesRef.on('value', (snapshot) => {
+        const wishes = snapshot.val();
+        wishesList.innerHTML = '';
+        
+        if (!wishes) {
+          wishesList.innerHTML = '<p>No wishes yet. Be the first to send one! 💝</p>';
+          return;
+        }
+        
+        // Convert to array and sort by timestamp (newest first)
+        const wishesArray = Object.entries(wishes)
+          .map(([key, value]) => ({ id: key, ...value }))
+          .sort((a, b) => b.timestamp - a.timestamp);
+        
+        wishesArray.forEach(wish => {
+          const wishItem = document.createElement('div');
+          wishItem.className = 'wish-item';
+          
+          let mediaHTML = '';
+          if (wish.audio) {
+            mediaHTML += `
+              <div class="wish-media">
+                <audio controls>
+                  <source src="${wish.audio}" type="audio/webm">
+                  Your browser does not support audio.
+                </audio>
+              </div>
+            `;
+          }
+          
+          if (wish.video) {
+            mediaHTML += `
+              <div class="wish-media">
+                <video controls width="300">
+                  <source src="${wish.video}" type="video/webm">
+                  Your browser does not support video.
+                </video>
+              </div>
+            `;
+          }
+          
+          wishItem.innerHTML = `
+            <div class="wish-header">
+              <span class="wish-name">${wish.name}</span>
+              <span class="wish-time">${wish.date || new Date(wish.timestamp).toLocaleString()}</span>
+            </div>
+            <div class="wish-text">${wish.text}</div>
+            ${mediaHTML}
+          `;
+          
+          wishesList.appendChild(wishItem);
+        });
+      });
+    }
 
     function speakNotes() {
       const speech = new SpeechSynthesisUtterance(noteText);
@@ -568,16 +997,74 @@
 
     wishesButton.addEventListener("click", () => {
       wishesModal.style.display = "flex";
+      // Reset form
+      wishForm.reset();
+      audioPreview.innerHTML = '';
+      videoPreview.innerHTML = '';
+      audioBlob = null;
+      videoBlob = null;
     });
 
     closeModal.addEventListener("click", () => {
       wishesModal.style.display = "none";
+      // Stop any ongoing recordings
+      stopAudioRecording();
+      stopVideoRecording();
+    });
+
+    audioRecordBtn.addEventListener("click", startAudioRecording);
+    audioStopBtn.addEventListener("click", stopAudioRecording);
+
+    videoRecordBtn.addEventListener("click", startVideoRecording);
+    videoStopBtn.addEventListener("click", stopVideoRecording);
+
+    // Handle wish form submission
+    wishForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById("name").value.trim();
+      const wishText = document.getElementById("wish-text").value.trim();
+      
+      if (!name || !wishText) {
+        alert("Please enter your name and wish!");
+        return;
+      }
+      
+      // Show loading state
+      const submitBtn = wishForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Sending...";
+      submitBtn.disabled = true;
+      
+      try {
+        await saveWish(name, wishText, audioBlob, videoBlob);
+        
+        // Reset form and close modal
+        wishForm.reset();
+        audioPreview.innerHTML = '';
+        videoPreview.innerHTML = '';
+        audioBlob = null;
+        videoBlob = null;
+        
+        // Show success message
+        alert("Thank you for your heartfelt wish! 💝");
+        wishesModal.style.display = "none";
+      } catch (error) {
+        console.error("Error saving wish:", error);
+        alert("Error sending wish. Please try again.");
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
     });
 
     // Close modal when clicking outside
     window.addEventListener("click", (event) => {
       if (event.target === wishesModal) {
         wishesModal.style.display = "none";
+        // Stop any ongoing recordings
+        stopAudioRecording();
+        stopVideoRecording();
       }
     });
 
@@ -585,7 +1072,13 @@
     window.addEventListener('DOMContentLoaded', () => {
       initializeSlideshow();
       startSlideshow();
+      loadWishes(); // Load existing wishes
     });
+
+    // Periodically refresh wishes
+    setInterval(() => {
+      // Wishes are already updated in real-time via Firebase listener
+    }, 10000); // Check every 10 seconds
   </script>
 </body>
 </html>
