@@ -647,6 +647,18 @@
       animation: fadeIn 0.5s ease-out;
     }
 
+    /* Audio/Video Success Message */
+    .audio-success-message, .video-success-message {
+      color: #4CAF50;
+      font-weight: bold;
+      margin-top: 10px;
+      padding: 10px;
+      background: #f0f9f0;
+      border-radius: 5px;
+      border-left: 4px solid #4CAF50;
+      display: none;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -931,6 +943,10 @@
         <div class="recording-timer" id="audio-timer">00:00</div>
         <div class="recording-status" id="audio-status">Ready to record</div>
         
+        <div id="audio-success-message" class="audio-success-message" style="display: none;">
+          Audio wish submitted successfully! Thank you ❤️
+        </div>
+        
         <audio class="audio-preview" id="audio-preview" controls></audio>
         
         <input type="text" class="name-input" id="audio-name" placeholder="Your Name" style="margin-top: 20px;">
@@ -957,6 +973,10 @@
         <div class="recording-timer" id="video-timer">00:00</div>
         <div class="recording-status" id="video-status">Ready to record</div>
         
+        <div id="video-success-message" class="video-success-message" style="display: none;">
+          Video wish submitted successfully! Thank you ❤️
+        </div>
+        
         <video class="video-preview" id="video-preview" controls></video>
         
         <input type="text" class="name-input" id="video-name" placeholder="Your Name" style="margin-top: 20px;">
@@ -982,7 +1002,7 @@
 
     <!-- Background Music -->
     <audio id="background-music" loop>
-      <source src="https://dl.mixzetu.com/uploads/King%20Paluta%20ft%20Kwabena%20Kwabena%20-%20Ewor%20Me.mp3" type="audio/mpeg">
+      <source src="a.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
@@ -1069,6 +1089,7 @@
     const audioTimer = document.getElementById("audio-timer");
     const audioStatus = document.getElementById("audio-status");
     const audioNameInput = document.getElementById("audio-name");
+    const audioSuccessMessage = document.getElementById("audio-success-message");
     
     // Video recording elements
     const startVideoButton = document.getElementById("start-video");
@@ -1078,6 +1099,7 @@
     const videoTimer = document.getElementById("video-timer");
     const videoStatus = document.getElementById("video-status");
     const videoNameInput = document.getElementById("video-name");
+    const videoSuccessMessage = document.getElementById("video-success-message");
     
     // Other variables
     const backgroundMusic = document.getElementById("background-music");
@@ -1494,14 +1516,17 @@
         const wishesRef = database.ref('wishes');
         await wishesRef.push(wishData);
         
+        // Show success message
+        audioSuccessMessage.style.display = 'block';
         audioStatus.textContent = "Audio wish submitted successfully!";
         audioStatus.style.color = "#4CAF50";
         
-        // Clear inputs and reset
+        // Clear inputs and reset after delay
         setTimeout(() => {
           audioNameInput.value = '';
           audioPreview.style.display = 'none';
           audioPreview.src = '';
+          audioSuccessMessage.style.display = 'none';
           audioModal.style.display = 'none';
           audioStatus.textContent = "Ready to record";
           audioStatus.style.color = "#333";
@@ -1510,10 +1535,11 @@
           // Reset recording
           recordedChunks = [];
           resetAudioRecording();
-        }, 1500);
+        }, 2000);
         
       } catch (error) {
         console.error('Error submitting audio wish:', error);
+        audioSuccessMessage.style.display = 'none';
         audioStatus.textContent = "Error submitting audio wish. Please try again.";
         audioStatus.style.color = "#f44336";
         sendAudioButton.disabled = false;
@@ -1570,14 +1596,17 @@
         const wishesRef = database.ref('wishes');
         await wishesRef.push(wishData);
         
+        // Show success message
+        videoSuccessMessage.style.display = 'block';
         videoStatus.textContent = "Video wish submitted successfully!";
         videoStatus.style.color = "#4CAF50";
         
-        // Clear inputs and reset
+        // Clear inputs and reset after delay
         setTimeout(() => {
           videoNameInput.value = '';
           videoPreview.style.display = 'none';
           videoPreview.src = '';
+          videoSuccessMessage.style.display = 'none';
           videoModal.style.display = 'none';
           videoStatus.textContent = "Ready to record";
           videoStatus.style.color = "#333";
@@ -1586,10 +1615,11 @@
           // Reset recording
           recordedChunks = [];
           resetVideoRecording();
-        }, 1500);
+        }, 2000);
         
       } catch (error) {
         console.error('Error submitting video wish:', error);
+        videoSuccessMessage.style.display = 'none';
         videoStatus.textContent = "Error submitting video wish. Please try again.";
         videoStatus.style.color = "#f44336";
         sendVideoButton.disabled = false;
@@ -1632,7 +1662,7 @@
           wisherNameInput.value = '';
           wishTextInput.value = '';
           
-          // Hide success message after 3 seconds
+          // Hide success message and modal after 3 seconds
           setTimeout(() => {
             successMessage.style.display = 'none';
             wishesModal.style.display = 'none';
@@ -1774,7 +1804,7 @@
           heart.style.width = `${size}px`;
           heart.style.height = `${size}px`;
           
-          const colors = ['#ff6b9d', '#ff4081', '#e6399e', '#d6336c'];
+          const colors = ['#ff6b9d', '#ff4081, #e6399e', '#d6336c'];
           const color = colors[Math.floor(Math.random() * colors.length)];
           heart.style.backgroundColor = color;
           
@@ -1816,6 +1846,7 @@
     floatingWish.addEventListener("click", () => {
       wishesModal.style.display = "flex";
       wisherNameInput.focus();
+      successMessage.style.display = 'none';
     });
 
     floatingAudio.addEventListener("click", () => {
@@ -1828,6 +1859,7 @@
       audioStatus.textContent = "Ready to record";
       audioStatus.style.color = "#333";
       audioTimer.textContent = "00:00";
+      audioSuccessMessage.style.display = 'none';
       recordedChunks = [];
     });
 
@@ -1841,6 +1873,7 @@
       videoStatus.textContent = "Ready to record";
       videoStatus.style.color = "#333";
       videoTimer.textContent = "00:00";
+      videoSuccessMessage.style.display = 'none';
       recordedChunks = [];
     });
 
@@ -1848,6 +1881,8 @@
     closeModal.addEventListener("click", () => {
       wishesModal.style.display = "none";
       successMessage.style.display = 'none';
+      wisherNameInput.value = '';
+      wishTextInput.value = '';
     });
 
     closeAudioModal.addEventListener("click", () => {
@@ -1864,6 +1899,7 @@
       audioStatus.textContent = "Ready to record";
       audioStatus.style.color = "#333";
       audioTimer.textContent = "00:00";
+      audioSuccessMessage.style.display = 'none';
       recordedChunks = [];
     });
 
@@ -1881,6 +1917,7 @@
       videoStatus.textContent = "Ready to record";
       videoStatus.style.color = "#333";
       videoTimer.textContent = "00:00";
+      videoSuccessMessage.style.display = 'none';
       recordedChunks = [];
     });
 
@@ -1910,6 +1947,8 @@
       if (event.target === wishesModal) {
         wishesModal.style.display = "none";
         successMessage.style.display = 'none';
+        wisherNameInput.value = '';
+        wishTextInput.value = '';
       }
       if (event.target === audioModal) {
         // Stop recording if in progress
@@ -1925,6 +1964,7 @@
         audioStatus.textContent = "Ready to record";
         audioStatus.style.color = "#333";
         audioTimer.textContent = "00:00";
+        audioSuccessMessage.style.display = 'none';
         recordedChunks = [];
       }
       if (event.target === videoModal) {
@@ -1941,6 +1981,7 @@
         videoStatus.textContent = "Ready to record";
         videoStatus.style.color = "#333";
         videoTimer.textContent = "00:00";
+        videoSuccessMessage.style.display = 'none';
         recordedChunks = [];
       }
       if (event.target === wishesDisplayModal) {
