@@ -110,32 +110,46 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* Notes Section - Initially Hidden */
+    /* Notes Section - Initially Hidden at Bottom */
     .notes {
-      margin-top: 30px;
+      position: fixed;
+      bottom: -300px; /* Start off-screen at bottom */
+      left: 50%;
+      transform: translateX(-50%);
       font-size: 1rem;
       background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
-      display: inline-block;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.25);
       max-width: 800px;
       width: 90%;
+      z-index: 99;
       opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.8s ease-out;
-      max-height: 0;
-      overflow: hidden;
-      padding: 0;
-      margin: 0 auto;
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .notes.show {
       opacity: 1;
-      transform: translateY(0);
-      max-height: 1000px;
-      padding: 20px;
-      margin-top: 30px;
+      bottom: 180px; /* Position above floating button */
+      animation: bounceUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes bounceUp {
+      0% {
+        bottom: -300px;
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+      }
+      70% {
+        bottom: 200px;
+        opacity: 1;
+        transform: translateX(-50%) scale(1.05);
+      }
+      100% {
+        bottom: 180px;
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
     }
 
     .notes h2 {
@@ -632,6 +646,34 @@
         height: 300px;
       }
       
+      .notes {
+        width: 85%;
+        padding: 20px;
+        bottom: -250px;
+      }
+      
+      .notes.show {
+        bottom: 160px;
+      }
+      
+      @keyframes bounceUp {
+        0% {
+          bottom: -250px;
+          opacity: 0;
+          transform: translateX(-50%) scale(0.8);
+        }
+        70% {
+          bottom: 180px;
+          opacity: 1;
+          transform: translateX(-50%) scale(1.05);
+        }
+        100% {
+          bottom: 160px;
+          opacity: 1;
+          transform: translateX(-50%) scale(1);
+        }
+      }
+      
       .floating-start-button {
         bottom: 120px;
         min-width: 200px;
@@ -689,6 +731,42 @@
         height: 250px;
       }
       
+      .notes {
+        width: 90%;
+        padding: 15px;
+        bottom: -220px;
+      }
+      
+      .notes.show {
+        bottom: 150px;
+      }
+      
+      @keyframes bounceUp {
+        0% {
+          bottom: -220px;
+          opacity: 0;
+          transform: translateX(-50%) scale(0.8);
+        }
+        70% {
+          bottom: 170px;
+          opacity: 1;
+          transform: translateX(-50%) scale(1.05);
+        }
+        100% {
+          bottom: 150px;
+          opacity: 1;
+          transform: translateX(-50%) scale(1);
+        }
+      }
+      
+      .notes h2 {
+        font-size: 1.5rem;
+      }
+      
+      .notes p {
+        font-size: 1rem;
+      }
+      
       .floating-start-button {
         bottom: 110px;
         min-width: 180px;
@@ -735,7 +813,7 @@
     
     <a id="download-link" class="download" href="images/image0.jpeg" download="AnniversaryImage.jpeg">Download Current Image</a>
 
-    <!-- Notes Section - Initially Hidden -->
+    <!-- Notes Section - Initially Hidden at Bottom -->
     <div class="notes" id="notes-section">
       <h2>Special Notes</h2>
       <p id="note-text">💍 10 years of love, laughter, and memories.</p>
@@ -848,15 +926,15 @@
   <script>
     // Firebase Configuration
     const firebaseConfig = {
-  apiKey: "AIzaSyCH0t_30dpF7oasM84zNcmiWtz1E9GeT7s",
-  authDomain: "qeliz-e4340.firebaseapp.com",
-  databaseURL: "https://qeliz-e4340-default-rtdb.firebaseio.com",
-  projectId: "qeliz-e4340",
-  storageBucket: "qeliz-e4340.firebasestorage.app",
-  messagingSenderId: "1007230953888",
-  appId: "1:1007230953888:web:fb9b99ac3c3bc1b9a89cc5",
-  measurementId: "G-EQHZDL74BJ"
-};
+      apiKey: "AIzaSyCH0t_30dpF7oasM84zNcmiWtz1E9GeT7s",
+      authDomain: "qeliz-e4340.firebaseapp.com",
+      databaseURL: "https://qeliz-e4340-default-rtdb.firebaseio.com",
+      projectId: "qeliz-e4340",
+      storageBucket: "qeliz-e4340.firebasestorage.app",
+      messagingSenderId: "1007230953888",
+      appId: "1:1007230953888:web:fb9b99ac3c3bc1b9a89cc5",
+      measurementId: "G-EQHZDL74BJ"
+    };
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
@@ -1428,7 +1506,7 @@
 
     // Start celebration function
     function startCelebration() {
-      // Show notes section with animation
+      // Show notes section with bounce-up animation
       notesSection.classList.add('show');
       
       // Start background music
