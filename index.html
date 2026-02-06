@@ -432,7 +432,7 @@
       transform: translateY(-2px);
     }
 
-    /* Recording Modal */
+    /* Recording Modal - UPDATED FOR SCROLLABILITY */
     .recording-modal {
       display: none;
       position: fixed;
@@ -446,6 +446,7 @@
       align-items: center;
       padding: 20px;
       box-sizing: border-box;
+      overflow-y: auto; /* Make the modal itself scrollable */
     }
 
     .recording-content {
@@ -457,6 +458,11 @@
       text-align: center;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       animation: modal-appear 0.5s ease-out;
+      margin: 20px auto; /* Center with margin for scrolling */
+      max-height: 90vh; /* Limit height for scrolling */
+      overflow-y: auto; /* Make content scrollable */
+      display: flex;
+      flex-direction: column;
     }
 
     .recording-title {
@@ -515,6 +521,7 @@
       padding: 8px;
       border-radius: 8px;
       background-color: #f5f5f5;
+      word-break: break-word;
     }
 
     .recording-timer {
@@ -526,17 +533,28 @@
 
     .audio-preview, .video-preview {
       margin: 20px auto;
-      display: none;
       max-width: 100%;
       border-radius: 10px;
       background: #f5f5f5;
       padding: 10px;
+      display: none; /* Initially hidden */
     }
 
     .video-preview {
       width: 100%;
       max-height: 300px;
       background: #000;
+    }
+
+    /* Make video modal specifically more scrollable */
+    #video-modal .recording-content {
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    #video-modal .video-preview {
+      max-height: 250px;
+      object-fit: contain;
     }
 
     /* Wishes Display Modal */
@@ -771,6 +789,16 @@
         width: 100%;
         max-width: 200px;
       }
+      
+      /* Make video modal more scrollable on mobile */
+      #video-modal .recording-content {
+        max-height: 80vh;
+        padding: 15px;
+      }
+      
+      #video-modal .video-preview {
+        max-height: 200px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -848,6 +876,20 @@
       
       .floating-icon:hover .icon-text {
         display: none;
+      }
+      
+      /* Make video modal even more scrollable on very small screens */
+      #video-modal .recording-content {
+        max-height: 75vh;
+        padding: 12px;
+      }
+      
+      #video-modal .video-preview {
+        max-height: 150px;
+      }
+      
+      #video-modal .recording-controls {
+        margin: 10px 0;
       }
     }
   </style>
@@ -955,7 +997,7 @@
       </div>
     </div>
 
-    <!-- Video Recording Modal -->
+    <!-- Video Recording Modal - NOW SCROLLABLE -->
     <div class="recording-modal" id="video-modal">
       <div class="recording-content">
         <div class="modal-header">
@@ -998,7 +1040,7 @@
 
     <!-- Background Music -->
     <audio id="background-music" loop>
-      <source src="a.mp3" type="audio/mpeg">
+      <source src="https://dl.mixzetu.com/uploads/King%20Paluta%20ft%20Kwabena%20Kwabena%20-%20Ewor%20Me.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
@@ -2064,5 +2106,6 @@
       });
     });
   </script>
+  <b>DevOfori</b>
 </body>
 </html>
