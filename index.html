@@ -725,6 +725,23 @@
       background: #b52a57;
     }
 
+    /* Recording Status Indicators */
+    .recording-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background-color: #f44336;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .animated-title {
@@ -908,6 +925,9 @@
   
   <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- MP3 Encoder Library -->
+  <script src="https://unpkg.com/lamejs@1.2.1/lame.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -1163,6 +1183,9 @@
     let recordingSeconds = 0;
     let isRecording = false;
     let currentRecordingType = ''; // 'audio' or 'video'
+    let audioContext;
+    let audioBuffer;
+    let audioWorkletNode;
 
     // Initialize slideshow with all images
     function initializeSlideshow() {
@@ -1231,6 +1254,51 @@
       timerElement.textContent = "00:00";
     }
 
+    // Convert Float32Array to Int16Array for MP3 encoding
+    function floatTo16BitPCM(input) {
+      const output = new Int16Array(input.length);
+      for (let i = 0; i < input.length; i++) {
+        const s = Math.max(-1, Math.min(1, input[i]));
+        output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      return output;
+    }
+
+    // Encode audio to MP3 using lamejs
+    function encodeToMP3(audioBuffer) {
+      const channels = audioBuffer.numberOfChannels;
+      const sampleRate = audioBuffer.sampleRate;
+      const samples = audioBuffer.getChannelData(0);
+      
+      // Convert to 16-bit PCM
+      const pcmData = floatTo16BitPCM(samples);
+      
+      // Create MP3 encoder
+      const mp3Encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+      
+      // Encode the PCM data
+      const blockSize = 1152;
+      const mp3Data = [];
+      
+      for (let i = 0; i < pcmData.length; i += blockSize) {
+        const sampleChunk = pcmData.subarray(i, i + blockSize);
+        const mp3buf = mp3Encoder.encodeBuffer(sampleChunk);
+        if (mp3buf.length > 0) {
+          mp3Data.push(new Int8Array(mp3buf));
+        }
+      }
+      
+      // Flush encoder
+      const mp3buf = mp3Encoder.flush();
+      if (mp3buf.length > 0) {
+        mp3Data.push(new Int8Array(mp3buf));
+      }
+      
+      // Combine all MP3 data
+      const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+      return mp3Blob;
+    }
+
     // Start audio recording
     async function startAudioRecording() {
       try {
@@ -1238,59 +1306,40 @@
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            sampleRate: 44100
+            sampleRate: 44100,
+            channelCount: 1
           }
         });
         
-        // Set MIME type based on browser support
-        const mimeTypes = [
-          'audio/webm;codecs=opus',
-          'audio/mp4',
-          'audio/webm'
-        ];
+        // Create AudioContext for processing
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({
+          sampleRate: 44100
+        });
         
-        let supportedMimeType = '';
-        for (const mimeType of mimeTypes) {
-          if (MediaRecorder.isTypeSupported(mimeType)) {
-            supportedMimeType = mimeType;
-            break;
-          }
-        }
+        // Create MediaStreamSource
+        const source = audioContext.createMediaStreamSource(audioStream);
         
-        if (!supportedMimeType) {
-          supportedMimeType = 'audio/webm';
-        }
+        // Create ScriptProcessorNode for capturing audio data
+        const bufferSize = 4096;
+        const recorder = audioContext.createScriptProcessor(bufferSize, 1, 1);
         
-        const options = { mimeType: supportedMimeType };
-        mediaRecorder = new MediaRecorder(audioStream, options);
         recordedChunks = [];
         
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            recordedChunks.push(event.data);
-          }
-        };
-        
-        mediaRecorder.onstop = () => {
-          const mimeType = mediaRecorder.mimeType || 'audio/webm';
-          const audioBlob = new Blob(recordedChunks, { type: mimeType });
-          const audioUrl = URL.createObjectURL(audioBlob);
+        recorder.onaudioprocess = (e) => {
+          if (!isRecording) return;
           
-          audioPreview.src = audioUrl;
-          audioPreview.style.display = 'block';
-          sendAudioButton.disabled = false;
-          audioStatus.textContent = "Recording stopped. Preview available.";
-          audioStatus.style.color = "#4CAF50";
+          const inputBuffer = e.inputBuffer;
+          const channelData = inputBuffer.getChannelData(0);
+          
+          // Convert Float32Array to Int16Array for MP3 encoding
+          const pcmData = floatTo16BitPCM(channelData);
+          recordedChunks.push(pcmData);
         };
         
-        mediaRecorder.onerror = (event) => {
-          console.error('MediaRecorder error:', event.error);
-          audioStatus.textContent = "Recording error. Please try again.";
-          audioStatus.style.color = "#f44336";
-          resetAudioRecording();
-        };
+        // Connect nodes
+        source.connect(recorder);
+        recorder.connect(audioContext.destination);
         
-        mediaRecorder.start(1000); // Collect data every 1 second
         isRecording = true;
         currentRecordingType = 'audio';
         startTimer();
@@ -1298,7 +1347,7 @@
         startAudioButton.disabled = true;
         stopAudioButton.disabled = false;
         sendAudioButton.disabled = true;
-        audioStatus.textContent = "Recording... Speak now!";
+        audioStatus.innerHTML = '<span class="recording-indicator"></span> Recording... Speak now!';
         audioStatus.style.color = "#4CAF50";
       } catch (error) {
         console.error('Error accessing microphone:', error);
@@ -1320,22 +1369,77 @@
         audioStream.getTracks().forEach(track => track.stop());
         audioStream = null;
       }
+      
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
     }
 
     // Stop audio recording
-    function stopAudioRecording() {
-      if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-        isRecording = false;
-        stopTimer();
-        
-        startAudioButton.disabled = false;
-        stopAudioButton.disabled = true;
-        
-        // Stop all audio tracks
-        if (audioStream) {
-          audioStream.getTracks().forEach(track => track.stop());
-          audioStream = null;
+    async function stopAudioRecording() {
+      if (!isRecording || currentRecordingType !== 'audio') return;
+      
+      isRecording = false;
+      stopTimer();
+      
+      startAudioButton.disabled = false;
+      stopAudioButton.disabled = true;
+      
+      // Stop audio context and stream
+      if (audioContext) {
+        await audioContext.close();
+        audioContext = null;
+      }
+      
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+        audioStream = null;
+      }
+      
+      // Process recorded data
+      if (recordedChunks.length > 0) {
+        try {
+          // Combine all recorded chunks
+          const totalLength = recordedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+          const combinedData = new Int16Array(totalLength);
+          let offset = 0;
+          
+          for (const chunk of recordedChunks) {
+            combinedData.set(chunk, offset);
+            offset += chunk.length;
+          }
+          
+          // Convert Int16Array back to Float32Array for encoding
+          const floatData = new Float32Array(combinedData.length);
+          for (let i = 0; i < combinedData.length; i++) {
+            floatData[i] = combinedData[i] / (combinedData[i] < 0 ? 32768 : 32767);
+          }
+          
+          // Create audio buffer
+          const audioBuffer = {
+            numberOfChannels: 1,
+            sampleRate: 44100,
+            getChannelData: () => floatData
+          };
+          
+          // Encode to MP3
+          const mp3Blob = encodeToMP3(audioBuffer);
+          const audioUrl = URL.createObjectURL(mp3Blob);
+          
+          audioPreview.src = audioUrl;
+          audioPreview.style.display = 'block';
+          sendAudioButton.disabled = false;
+          audioStatus.textContent = "Recording stopped. Preview available.";
+          audioStatus.style.color = "#4CAF50";
+          
+          // Store the MP3 blob for later upload
+          recordedChunks = [mp3Blob];
+        } catch (error) {
+          console.error('Error processing audio:', error);
+          audioStatus.textContent = "Error processing audio. Please try again.";
+          audioStatus.style.color = "#f44336";
+          recordedChunks = [];
         }
       }
     }
@@ -1344,7 +1448,11 @@
     async function startVideoRecording() {
       try {
         const constraints = {
-          audio: true,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          },
           video: {
             width: { ideal: 640, max: 1280 },
             height: { ideal: 480, max: 720 },
@@ -1354,34 +1462,6 @@
         };
         
         videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        // Set MIME type based on browser support
-        const mimeTypes = [
-          'video/webm;codecs=vp9,opus',
-          'video/webm;codecs=vp8,opus',
-          'video/webm;codecs=h264,opus',
-          'video/mp4;codecs=h264,aac',
-          'video/webm',
-          'video/mp4'
-        ];
-        
-        let supportedMimeType = '';
-        for (const mimeType of mimeTypes) {
-          if (MediaRecorder.isTypeSupported(mimeType)) {
-            supportedMimeType = mimeType;
-            break;
-          }
-        }
-        
-        if (!supportedMimeType) {
-          supportedMimeType = 'video/webm';
-        }
-        
-        const options = {
-          mimeType: supportedMimeType,
-          audioBitsPerSecond: 128000,
-          videoBitsPerSecond: 2500000
-        };
         
         // Show camera preview
         videoPreview.srcObject = videoStream;
@@ -1394,6 +1474,18 @@
           console.log('Preview play error:', playError);
         }
         
+        // Use MP4 format for recording
+        const options = {
+          mimeType: 'video/mp4;codecs=h264,opus',
+          videoBitsPerSecond: 2500000,
+          audioBitsPerSecond: 128000
+        };
+        
+        // Fallback to webm if MP4 is not supported
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm;codecs=vp9,opus';
+        }
+        
         mediaRecorder = new MediaRecorder(videoStream, options);
         recordedChunks = [];
         
@@ -1404,9 +1496,15 @@
         };
         
         mediaRecorder.onstop = async () => {
-          const mimeType = mediaRecorder.mimeType || 'video/webm';
-          const videoBlob = new Blob(recordedChunks, { type: mimeType });
-          const videoUrl = URL.createObjectURL(videoBlob);
+          const mimeType = mediaRecorder.mimeType || 'video/mp4';
+          let videoBlob = new Blob(recordedChunks, { type: mimeType });
+          
+          // If not MP4, we'll need to handle conversion
+          if (!mimeType.includes('mp4')) {
+            // For now, we'll keep the original format
+            // In a production app, you would use a server-side conversion
+            console.log('Recording in non-MP4 format:', mimeType);
+          }
           
           // Stop preview stream
           if (videoPreview.srcObject) {
@@ -1414,7 +1512,7 @@
           }
           
           videoPreview.srcObject = null;
-          videoPreview.src = videoUrl;
+          videoPreview.src = URL.createObjectURL(videoBlob);
           videoPreview.muted = false;
           
           sendVideoButton.disabled = false;
@@ -1437,7 +1535,7 @@
         startVideoButton.disabled = true;
         stopVideoButton.disabled = false;
         sendVideoButton.disabled = true;
-        videoStatus.textContent = "Recording... Smile!";
+        videoStatus.innerHTML = '<span class="recording-indicator"></span> Recording... Smile!';
         videoStatus.style.color = "#4CAF50";
       } catch (error) {
         console.error('Error accessing camera:', error);
@@ -1538,14 +1636,13 @@
         return;
       }
       
-      const mimeType = mediaRecorder.mimeType || 'audio/webm';
-      const audioBlob = new Blob(recordedChunks, { type: mimeType });
+      // Get the MP3 blob
+      const mp3Blob = recordedChunks[0];
       
       // Generate a safe filename
       const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       const timestamp = Date.now();
-      const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
-      const fileName = `audio_${timestamp}_${safeName}.${fileExtension}`;
+      const fileName = `audio_${timestamp}_${safeName}.mp3`;
       
       try {
         // Show uploading status
@@ -1556,7 +1653,7 @@
         startAudioButton.disabled = true;
         
         // Upload to Firebase Storage
-        const audioUrl = await uploadFile(audioBlob, fileName, 'audio');
+        const audioUrl = await uploadFile(mp3Blob, fileName, 'audio');
         
         // Save to Firebase Database
         const wishData = {
@@ -1565,8 +1662,8 @@
           url: audioUrl,
           timestamp: timestamp,
           date: new Date().toLocaleString(),
-          fileSize: audioBlob.size,
-          mimeType: mimeType
+          fileSize: mp3Blob.size,
+          mimeType: 'audio/mp3'
         };
         
         const wishesRef = database.ref('wishes');
@@ -1646,7 +1743,7 @@
         return;
       }
       
-      const mimeType = mediaRecorder.mimeType || 'video/webm';
+      const mimeType = mediaRecorder.mimeType || 'video/mp4';
       const videoBlob = new Blob(recordedChunks, { type: mimeType });
       
       // Generate a safe filename
@@ -1820,7 +1917,7 @@
               <div class="wish-author">
                 <i class="fas fa-microphone"></i> ${wish.name || 'Anonymous'}
               </div>
-              <div class="wish-text">Audio message</div>
+              <div class="wish-text">Audio message (MP3)</div>
               <div class="media-controls">
                 <button class="media-button" onclick="playAudio('${wish.url}')">
                   <i class="fas fa-play"></i> Play
@@ -1835,7 +1932,7 @@
               <div class="wish-author">
                 <i class="fas fa-video"></i> ${wish.name || 'Anonymous'}
               </div>
-              <div class="wish-text">Video message</div>
+              <div class="wish-text">Video message ${wish.mimeType && wish.mimeType.includes('mp4') ? '(MP4)' : ''}</div>
               <div class="media-controls">
                 <button class="media-button" onclick="playVideo('${wish.url}')">
                   <i class="fas fa-play"></i> Play
